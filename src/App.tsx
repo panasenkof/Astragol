@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import StartScreen from "@/components/StartScreen";
 import SettingsScreen from "@/components/SettingsScreen";
 import GameScreen from "@/components/GameScreen";
+import InstallHint from "@/components/InstallHint";
 import { audio } from "@/game/audio";
 import { loadScores, loadSettings, saveSettings } from "@/game/storage";
 import {
@@ -96,6 +97,7 @@ export default function App() {
           onScoresChanged={refreshScores}
         />
       )}
+      {screen !== "game" && <InstallHint />}
     </div>
   );
 }
