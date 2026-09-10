@@ -6,8 +6,9 @@ export const TOUCH_STRIP_H = 124;
 const DEADZONE = 0.15;
 
 /** Map a screen-space stick vector (y down) to a field heading. */
-export function screenAim(dx: number, dy: number, headsUp: boolean) {
-  return headsUp ? Math.atan2(dx, -dy) : Math.atan2(dy, dx);
+export function screenAim(dx: number, dy: number, rotated: boolean) {
+  // Rotated portrait: screen-up is field +x (toward the far / CPU goal).
+  return rotated ? Math.atan2(dx, -dy) : Math.atan2(dy, dx);
 }
 
 function BoostGlyph({ active, color }: { active: boolean; color: string }) {
