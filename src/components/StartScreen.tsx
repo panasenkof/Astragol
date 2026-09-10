@@ -48,7 +48,7 @@ export default function StartScreen({
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden">
       <StarField />
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-5xl flex-col items-center justify-center gap-8 px-5 py-10">
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-5xl flex-col items-center justify-center gap-8 px-5 pt-[max(2.5rem,calc(env(safe-area-inset-top)+1rem))] pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
         <div className="text-center">
           <Logo />
           <h1 className="mt-6 bg-gradient-to-b from-white via-cyan-100 to-cyan-400/70 bg-clip-text text-5xl font-black tracking-[0.18em] text-transparent sm:text-6xl">
