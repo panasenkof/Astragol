@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Orbitron", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Orbitron", "Noto Sans SC", "Noto Sans Devanagari",
+    "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Space Grotesk", "Noto Sans SC", "Noto Sans Devanagari",
+    "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {

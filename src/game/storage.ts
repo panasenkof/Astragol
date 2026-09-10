@@ -1,4 +1,5 @@
 import { STORAGE_SCORES, STORAGE_SETTINGS } from "./constants";
+import { isLocaleSetting } from "@/i18n";
 import {
   DEFAULT_SETTINGS,
   isAiDifficulty,
@@ -14,6 +15,9 @@ export function loadSettings(): Settings {
     const merged = { ...DEFAULT_SETTINGS, ...parsed };
     if (!isAiDifficulty(merged.aiDifficulty)) {
       merged.aiDifficulty = DEFAULT_SETTINGS.aiDifficulty;
+    }
+    if (!isLocaleSetting(merged.locale)) {
+      merged.locale = DEFAULT_SETTINGS.locale;
     }
     return merged;
   } catch {

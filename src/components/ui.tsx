@@ -1,4 +1,5 @@
 import { cn } from "@/utils/cn";
+import { localeUsesWideTracking, useI18n } from "@/i18n";
 import type { CSSProperties, ReactNode } from "react";
 
 export function Panel({
@@ -150,9 +151,13 @@ export function Toggle({
 }
 
 export function SectionTitle({ children }: { children: ReactNode }) {
+  const { locale } = useI18n();
+  const tracking = localeUsesWideTracking(locale)
+    ? "tracking-[0.25em] uppercase"
+    : "tracking-wide";
   return (
     <div className="mb-3 flex items-center gap-3">
-      <span className="text-xs font-bold tracking-[0.25em] text-cyan-300/80 uppercase">
+      <span className={`text-xs font-bold text-cyan-300/80 ${tracking}`}>
         {children}
       </span>
       <span className="h-px flex-1 bg-gradient-to-r from-cyan-400/40 to-transparent" />

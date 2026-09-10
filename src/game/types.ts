@@ -1,25 +1,11 @@
+import type { LocaleSetting } from "@/i18n/locales";
+
 export type AiDifficulty = "easy" | "normal" | "hard";
 
-export const AI_DIFFICULTY_OPTIONS: {
-  id: AiDifficulty;
-  label: string;
-  blurb: string;
-}[] = [
-  {
-    id: "easy",
-    label: "Easy",
-    blurb: "Slow to turn and often off-target — good for learning the feel.",
-  },
-  {
-    id: "normal",
-    label: "Normal",
-    blurb: "A fair match. Reads the ball, but still leaves openings.",
-  },
-  {
-    id: "hard",
-    label: "Hard",
-    blurb: "Snaps onto shots, predicts bounces, and covers its own gate.",
-  },
+export const AI_DIFFICULTY_OPTIONS: { id: AiDifficulty }[] = [
+  { id: "easy" },
+  { id: "normal" },
+  { id: "hard" },
 ];
 
 export function isAiDifficulty(v: unknown): v is AiDifficulty {
@@ -38,6 +24,8 @@ export interface Settings {
   p1Color: string;
   p2Color: string;
   aiDifficulty: AiDifficulty;
+  /** `"auto"` follows the device language; otherwise a locked locale. */
+  locale: LocaleSetting;
 }
 
 export type GameMode = "1p" | "2p";
@@ -65,4 +53,5 @@ export const DEFAULT_SETTINGS: Settings = {
   p1Color: "#38bdf8",
   p2Color: "#fb5a4b",
   aiDifficulty: "normal",
+  locale: "auto",
 };

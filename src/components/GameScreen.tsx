@@ -6,6 +6,7 @@ import { FIELD_H, FIELD_W, TARGET_SCORE } from "@/game/constants";
 import type { GameMode, Settings } from "@/game/types";
 import { NeonButton } from "./ui";
 import PlayerTouchControls, { TOUCH_STRIP_H } from "./PlayerTouchControls";
+import { localeUsesWideTracking, useI18n, type Translate } from "@/i18n";
 
 interface Hud {
   s1: number;
@@ -123,6 +124,11 @@ export default function GameScreen({
   const [narrow, setNarrow] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < 1100 : true
   );
+  const { t, locale, rtl } = useI18n();
+  const overlayDir = rtl ? "rtl" : "ltr";
+  const titleTrack = localeUsesWideTracking(locale)
+    ? "tracking-[0.2em]"
+    : "tracking-normal";
 
   settingsRef.current = settings;
 
@@ -461,8 +467,14 @@ export default function GameScreen({
   const showRotate = headsUp && !portrait;
   const touchActive = isTouch && !paused && !over;
 
+  const youLabel = mode === "1p" ? t("you") : t("p1");
+  const foeLabel = mode === "1p" ? t("cpu") : t("p2");
+
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-[#04030d] select-none">
+    <div
+      className="relative h-[100dvh] w-full overflow-hidden bg-[#04030d] select-none"
+      dir="ltr"
+    >
       <canvas
         ref={canvasRef}
         className="absolute inset-0 h-full w-full touch-none"
@@ -473,7 +485,7 @@ export default function GameScreen({
           <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2">
             <div className="flex items-stretch gap-2 rounded-2xl border border-white/10 bg-black/40 p-2 backdrop-blur-md">
               <TeamCard
-                name={mode === "1p" ? "YOU" : "P1"}
+                name={youLabel}
                 score={hud.s1}
                 color={p1}
                 target={TARGET_SCORE}
@@ -481,14 +493,14 @@ export default function GameScreen({
               />
               <div className="flex flex-col items-center justify-center px-3">
                 <span className="text-[10px] font-bold tracking-[0.3em] text-slate-400">
-                  VS
+                  {t("vs")}
                 </span>
                 <span className="mt-0.5 font-mono text-xs text-cyan-200/80">
                   {fmtTime(hud.elapsed)}
                 </span>
               </div>
               <TeamCard
-                name={mode === "1p" ? "CPU" : "P2"}
+                name={foeLabel}
                 score={hud.s2}
                 color={p2}
                 target={TARGET_SCORE}
@@ -515,11 +527,14 @@ export default function GameScreen({
                 key={`${who}-${hud.count}`}
                 className="text-[18vw] font-black leading-none text-white/90 drop-shadow-[0_0_40px_rgba(120,200,255,0.8)] sm:text-[120px]"
               >
-                {hud.count === 0 ? "GO!" : hud.count}
+                {hud.count === 0 ? t("go") : hud.count}
               </div>
               {headsUp && (
-                <div className="rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 text-center text-[10px] tracking-wide text-slate-300">
-                  Sit opposite · stick aims · hold boost
+                <div
+                  className="rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 text-center text-[10px] tracking-wide text-slate-300"
+                  dir={overlayDir}
+                >
+                  {t("headsUpHint")}
                 </div>
               )}
             </div>
@@ -530,28 +545,33 @@ export default function GameScreen({
         <DualFace headsUp={headsUp}>
           {() => (
             <div className="text-[16vw] font-black text-cyan-200 drop-shadow-[0_0_40px_rgba(120,200,255,0.9)] sm:text-[100px]">
-              GO!
+              {t("go")}
             </div>
           )}
         </DualFace>
       )}
 
       {hud.phase === "countdown" && !isTouch && (
-        <div className="pointer-events-none absolute left-1/2 top-24 z-10 -translate-x-1/2 rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-center text-[11px] text-slate-300 backdrop-blur-md sm:text-xs">
+        <div
+          className="pointer-events-none absolute left-1/2 top-24 z-10 -translate-x-1/2 rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-center text-[11px] text-slate-300 backdrop-blur-md sm:text-xs"
+          dir={overlayDir}
+        >
           <div>
             <span className="font-bold" style={{ color: p1 }}>
-              {mode === "1p" ? "YOU" : "P1"}
+              {youLabel}
             </span>{" "}
             <Kbd>←</Kbd>
-            <Kbd>→</Kbd> aim · <Kbd>↑</Kbd> thrust · <Kbd>↓</Kbd> reverse
+            <Kbd>→</Kbd> {t("aim")} · <Kbd>↑</Kbd> {t("thrust")} · <Kbd>↓</Kbd>{" "}
+            {t("reverse")}
           </div>
           {mode === "2p" && (
             <div className="mt-1">
               <span className="font-bold" style={{ color: p2 }}>
-                P2
+                {t("p2")}
               </span>{" "}
               <Kbd>A</Kbd>
-              <Kbd>D</Kbd> aim · <Kbd>W</Kbd> thrust · <Kbd>S</Kbd> reverse
+              <Kbd>D</Kbd> {t("aim")} · <Kbd>W</Kbd> {t("thrust")} ·{" "}
+              <Kbd>S</Kbd> {t("reverse")}
             </div>
           )}
         </div>
@@ -568,10 +588,10 @@ export default function GameScreen({
                   textShadow: `0 0 55px ${hud.scorer === 0 ? p1 : p2}`,
                 }}
               >
-                GOAL!
+                {t("goal")}
               </div>
               <div className="text-xs font-bold tracking-[0.3em] text-white/70">
-                {goalCaption(mode, hud.scorer, who, headsUp)}
+                {goalCaption(mode, hud.scorer, who, headsUp, t)}
               </div>
             </div>
           )}
@@ -584,7 +604,7 @@ export default function GameScreen({
             <div className="rotate-180">
               <PlayerTouchControls
                 color={p2}
-                label="P2"
+                label={t("p2")}
                 myScore={hud.s2}
                 theirScore={hud.s1}
                 theirColor={p1}
@@ -601,7 +621,7 @@ export default function GameScreen({
           <div className="absolute inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)]">
             <PlayerTouchControls
               color={p1}
-              label="P1"
+              label={t("p1")}
               myScore={hud.s1}
               theirScore={hud.s2}
               theirColor={p2}
@@ -621,7 +641,7 @@ export default function GameScreen({
         <div className="absolute inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)]">
           <PlayerTouchControls
             color={p1}
-            label={mode === "1p" ? "YOU" : "P1"}
+            label={youLabel}
             onAim={(a) => setAim(0, a)}
             onThrust={(v) => setThrust(0, v)}
             headsUp={false}
@@ -634,6 +654,8 @@ export default function GameScreen({
           headsUp={headsUp}
           p1={
             <PauseCard
+              titleTrack={titleTrack}
+              dir={overlayDir}
               onResume={togglePause}
               onRestart={restart}
               onExit={onExit}
@@ -656,6 +678,7 @@ export default function GameScreen({
               seconds={over.seconds}
               p1={p1}
               p2={p2}
+              dir={overlayDir}
               onRestart={restart}
               onExit={onExit}
             />
@@ -671,6 +694,7 @@ export default function GameScreen({
               seconds={over.seconds}
               p1={p1}
               p2={p2}
+              dir={overlayDir}
               onRestart={restart}
               onExit={onExit}
             />
@@ -680,8 +704,11 @@ export default function GameScreen({
 
       {showRotate && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 px-8 text-center">
-          <p className="max-w-sm text-lg font-bold tracking-wide text-cyan-100">
-            Turn the phone upright and sit opposite each other
+          <p
+            className="max-w-sm text-lg font-bold tracking-wide text-cyan-100"
+            dir={overlayDir}
+          >
+            {t("rotatePhone")}
           </p>
         </div>
       )}
@@ -693,11 +720,12 @@ function goalCaption(
   mode: GameMode,
   scorer: 0 | 1,
   who: 0 | 1,
-  headsUp: boolean
+  headsUp: boolean,
+  t: Translate
 ) {
-  if (headsUp) return scorer === who ? "YOU SCORE" : "THEY SCORE";
-  if (scorer === 0) return mode === "1p" ? "YOU SCORE" : "PLAYER 1 SCORES";
-  return mode === "1p" ? "CPU SCORES" : "PLAYER 2 SCORES";
+  if (headsUp) return scorer === who ? t("youScore") : t("theyScore");
+  if (scorer === 0) return mode === "1p" ? t("youScore") : t("player1Scores");
+  return mode === "1p" ? t("cpuScores") : t("player2Scores");
 }
 
 function DualFace({
@@ -760,29 +788,36 @@ function DualMenu({
 }
 
 function PauseCard({
+  titleTrack,
+  dir,
   onResume,
   onRestart,
   onExit,
 }: {
+  titleTrack: string;
+  dir: "ltr" | "rtl";
   onResume: () => void;
   onRestart: () => void;
   onExit: () => void;
 }) {
+  const { t } = useI18n();
   return (
-    <>
-      <h2 className="text-center text-3xl font-black tracking-[0.2em] text-cyan-100">
-        PAUSED
+    <div dir={dir}>
+      <h2
+        className={`text-center text-3xl font-black text-cyan-100 ${titleTrack}`}
+      >
+        {t("paused")}
       </h2>
       <div className="mt-5 grid w-full gap-3">
-        <NeonButton onClick={onResume}>▶ Resume</NeonButton>
+        <NeonButton onClick={onResume}>▶ {t("resume")}</NeonButton>
         <NeonButton variant="soft" onClick={onRestart}>
-          ↺ Restart match
+          ↺ {t("restartMatch")}
         </NeonButton>
         <NeonButton variant="ghost" onClick={onExit}>
-          ⌂ Main menu
+          ⌂ {t("mainMenu")}
         </NeonButton>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -796,6 +831,7 @@ function OverCard({
   seconds,
   p1,
   p2,
+  dir,
   onRestart,
   onExit,
 }: {
@@ -808,18 +844,20 @@ function OverCard({
   seconds: number;
   p1: string;
   p2: string;
+  dir: "ltr" | "rtl";
   onRestart: () => void;
   onExit: () => void;
 }) {
+  const { t } = useI18n();
   let title: string;
-  if (headsUp) title = winner === me ? "YOU WIN!" : "YOU LOSE";
-  else if (winner === 0) title = mode === "1p" ? "YOU WIN!" : "PLAYER 1 WINS!";
-  else title = mode === "1p" ? "CPU WINS" : "PLAYER 2 WINS!";
+  if (headsUp) title = winner === me ? t("youWin") : t("youLose");
+  else if (winner === 0) title = mode === "1p" ? t("youWin") : t("player1Wins");
+  else title = mode === "1p" ? t("cpuWins") : t("player2Wins");
   const titleColor = winner === 0 ? p1 : p2;
   return (
-    <>
+    <div dir={dir}>
       <p className="text-center text-xs font-bold tracking-[0.4em] text-slate-400">
-        MATCH OVER
+        {t("matchOver")}
       </p>
       <h2
         className="mt-2 text-center text-3xl font-black tracking-wide"
@@ -833,15 +871,15 @@ function OverCard({
         <span style={{ color: p2 }}>{s2}</span>
       </div>
       <p className="mt-2 text-center text-sm text-slate-400">
-        Match time {fmtTime(seconds)}
+        {t("matchTime", { time: fmtTime(seconds) })}
       </p>
       <div className="mt-6 grid w-full gap-3">
-        <NeonButton onClick={onRestart}>↺ Play again</NeonButton>
+        <NeonButton onClick={onRestart}>↺ {t("playAgain")}</NeonButton>
         <NeonButton variant="ghost" onClick={onExit}>
-          ⌂ Main menu
+          ⌂ {t("mainMenu")}
         </NeonButton>
       </div>
-    </>
+    </div>
   );
 }
 
