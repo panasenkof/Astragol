@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useI18n } from "@/i18n";
 
 const STORAGE_KEY = "nebula-install-hint-dismissed";
 
@@ -74,6 +75,8 @@ export default function InstallHint() {
     dismiss();
   };
 
+  const { t } = useI18n();
+
   if (!visible) return null;
 
   return (
@@ -84,14 +87,14 @@ export default function InstallHint() {
       <div className="pointer-events-auto mb-2 flex w-full max-w-lg items-start gap-3 rounded-2xl border border-cyan-300/25 bg-[#07061a]/90 px-4 py-3 text-sm text-slate-200 shadow-[0_0_32px_-8px_rgba(56,189,248,0.55)] backdrop-blur-md">
         <div className="min-w-0 flex-1">
           <p className="font-semibold tracking-wide text-cyan-100">
-            Add to Home Screen
+            {t("addToHome")}
           </p>
           <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
             {ios
-              ? "In Safari tap Share, then Add to Home Screen — play full-screen like an app."
+              ? t("iosHint")
               : deferred
-                ? "Install Nebula Arena to open it from your home screen."
-                : "Use your browser menu → Add to Home Screen / Install app."}
+                ? t("androidHint")
+                : t("browserHint")}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -101,12 +104,12 @@ export default function InstallHint() {
               onClick={() => void install()}
               className="rounded-xl border border-cyan-300/40 bg-cyan-400/15 px-3 py-1.5 text-xs font-bold tracking-wide text-cyan-100"
             >
-              Install
+              {t("install")}
             </button>
           )}
           <button
             type="button"
-            aria-label="Dismiss"
+            aria-label={t("dismiss")}
             onClick={dismiss}
             className="rounded-xl px-2 py-1.5 text-xs text-slate-400 hover:text-white"
           >

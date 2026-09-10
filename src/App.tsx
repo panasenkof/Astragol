@@ -12,6 +12,7 @@ import {
   type ScoreEntry,
   type Settings,
 } from "@/game/types";
+import { I18nProvider, resolveLocale } from "@/i18n";
 
 type Screen = "start" | "settings" | "game";
 
@@ -87,40 +88,44 @@ export default function App() {
     setScreen("game");
   }, [settings.musicMuted]);
 
+  const locale = resolveLocale(settings.locale);
+
   return (
-    <div className="min-h-[100dvh] w-full bg-[#04030d] text-slate-100 antialiased">
-      {screen === "start" && (
-        <StartScreen
-          onStart={startGame}
-          onSettings={() => {
-            audio.click();
-            setScreen("settings");
-          }}
-          scores={scores}
-          aiDifficulty={settings.aiDifficulty}
-        />
-      )}
-      {screen === "settings" && (
-        <SettingsScreen
-          settings={settings}
-          onChange={patchSettings}
-          onBack={() => setScreen("start")}
-          onResetDefaults={() => {
-            setSettings({ ...DEFAULT_SETTINGS });
-            audio.setMusicMuted(DEFAULT_SETTINGS.musicMuted);
-            audio.setSfxMuted(DEFAULT_SETTINGS.sfxMuted);
-          }}
-        />
-      )}
-      {screen === "game" && (
-        <GameScreen
-          settings={settings}
-          mode={mode}
-          onExit={() => setScreen("start")}
-          onScoresChanged={refreshScores}
-        />
-      )}
-      {screen !== "game" && <InstallHint />}
-    </div>
+    <I18nProvider locale={locale}>
+      <div className="min-h-[100dvh] w-full bg-[#04030d] text-slate-100 antialiased">
+        {screen === "start" && (
+          <StartScreen
+            onStart={startGame}
+            onSettings={() => {
+              audio.click();
+              setScreen("settings");
+            }}
+            scores={scores}
+            aiDifficulty={settings.aiDifficulty}
+          />
+        )}
+        {screen === "settings" && (
+          <SettingsScreen
+            settings={settings}
+            onChange={patchSettings}
+            onBack={() => setScreen("start")}
+            onResetDefaults={() => {
+              setSettings({ ...DEFAULT_SETTINGS });
+              audio.setMusicMuted(DEFAULT_SETTINGS.musicMuted);
+              audio.setSfxMuted(DEFAULT_SETTINGS.sfxMuted);
+            }}
+          />
+        )}
+        {screen === "game" && (
+          <GameScreen
+            settings={settings}
+            mode={mode}
+            onExit={() => setScreen("start")}
+            onScoresChanged={refreshScores}
+          />
+        )}
+        {screen !== "game" && <InstallHint />}
+      </div>
+    </I18nProvider>
   );
 }

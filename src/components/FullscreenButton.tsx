@@ -1,5 +1,6 @@
 import { audio } from "@/game/audio";
 import { useFullscreen } from "@/hooks/useFullscreen";
+import { useI18n } from "@/i18n";
 import { cn } from "@/utils/cn";
 
 function ExpandIcon() {
@@ -52,9 +53,10 @@ export default function FullscreenButton({
   compact?: boolean;
 }) {
   const { supported, active, toggle } = useFullscreen();
+  const { t } = useI18n();
   if (!supported) return null;
 
-  const label = active ? "Exit full screen" : "Full screen";
+  const label = active ? t("exitFullScreen") : t("fullScreen");
 
   return (
     <button

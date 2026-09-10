@@ -3,12 +3,12 @@ import StarField from "./StarField";
 import FullscreenButton from "./FullscreenButton";
 import { NeonButton, Panel, SectionTitle } from "./ui";
 import {
-  AI_DIFFICULTY_OPTIONS,
   type AiDifficulty,
   type GameMode,
   type ScoreEntry,
 } from "@/game/types";
 import { rankScores } from "@/game/storage";
+import { AI_LABEL_KEYS, Trans, useI18n } from "@/i18n";
 
 function fmtTime(s: number) {
   const m = Math.floor(s / 60);
@@ -43,8 +43,18 @@ export default function StartScreen({
   scores: ScoreEntry[];
   aiDifficulty: AiDifficulty;
 }) {
+  const { t, locale } = useI18n();
   const [showHelp, setShowHelp] = useState(false);
   const top = rankScores(scores).slice(0, 5);
+  const titleTrack =
+    locale === "zh" || locale === "hi" || locale === "ar"
+      ? "tracking-normal"
+      : "tracking-[0.18em]";
+  const subtitleTrack =
+    locale === "zh" || locale === "hi" || locale === "ar"
+      ? "tracking-[0.2em]"
+      : "tracking-[0.5em]";
+  const difficulty = t(AI_LABEL_KEYS[aiDifficulty]);
 
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden">
@@ -55,15 +65,18 @@ export default function StartScreen({
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-5xl flex-col items-center justify-center gap-8 px-5 pt-[max(2.5rem,calc(env(safe-area-inset-top)+1rem))] pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
         <div className="text-center">
           <Logo />
-          <h1 className="mt-6 bg-gradient-to-b from-white via-cyan-100 to-cyan-400/70 bg-clip-text text-5xl font-black tracking-[0.18em] text-transparent sm:text-6xl">
+          <h1
+            className={`mt-6 bg-gradient-to-b from-white via-cyan-100 to-cyan-400/70 bg-clip-text text-5xl font-black text-transparent sm:text-6xl ${titleTrack}`}
+          >
             NEBULA
           </h1>
-          <h2 className="mt-1 text-2xl font-bold tracking-[0.5em] text-violet-300/90 sm:text-3xl">
+          <h2
+            className={`mt-1 text-2xl font-bold text-violet-300/90 sm:text-3xl ${subtitleTrack}`}
+          >
             ARENA
           </h2>
           <p className="mx-auto mt-4 max-w-md text-sm text-slate-400">
-            Cosmic orb soccer. Fly your glowing ship, slam the metal sphere into
-            the enemy gate. First to 5 goals wins.
+            {t("tagline")}
           </p>
         </div>
 
@@ -74,11 +87,9 @@ export default function StartScreen({
                 className="py-4 text-lg"
                 onClick={() => onStart("1p")}
               >
-                ▶ 1 Player&nbsp;&nbsp;
+                ▶ {t("play1Player")}&nbsp;&nbsp;
                 <span className="text-xs font-bold opacity-70">
-                  vs&nbsp;CPU ·{" "}
-                  {AI_DIFFICULTY_OPTIONS.find((o) => o.id === aiDifficulty)
-                    ?.label ?? "Normal"}
+                  {t("vsCpu", { difficulty })}
                 </span>
               </NeonButton>
               <NeonButton
@@ -86,30 +97,30 @@ export default function StartScreen({
                 className="py-4 text-lg"
                 onClick={() => onStart("2p")}
               >
-                👥 2 Players&nbsp;&nbsp;
+                👥 {t("play2Players")}&nbsp;&nbsp;
                 <span className="text-xs font-bold opacity-70">
-                  sit opposite
+                  {t("sitOpposite")}
                 </span>
               </NeonButton>
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <NeonButton variant="ghost" onClick={onSettings}>
-                  ⚙ Settings
+                  ⚙ {t("settings")}
                 </NeonButton>
                 <NeonButton
                   variant="ghost"
                   onClick={() => setShowHelp((v) => !v)}
                 >
-                  ? How to play
+                  ? {t("howToPlay")}
                 </NeonButton>
               </div>
             </div>
           </Panel>
 
           <Panel className="p-5">
-            <SectionTitle>Top Runs</SectionTitle>
+            <SectionTitle>{t("topRuns")}</SectionTitle>
             {top.length === 0 ? (
               <p className="py-6 text-center text-sm text-slate-500">
-                No matches yet — be the first.
+                {t("noMatches")}
               </p>
             ) : (
               <ol className="space-y-2">
@@ -143,39 +154,44 @@ export default function StartScreen({
           <Panel className="w-full max-w-2xl p-6">
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
-                <SectionTitle>On a phone</SectionTitle>
+                <SectionTitle>{t("helpOnPhone")}</SectionTitle>
                 <ul className="space-y-1.5 text-sm text-slate-300">
-                  <li>Two players sit opposite, phone between you</li>
-                  <li>Stick aims your ship · hold the boost button to fly</li>
-                  <li>Your goal is the one behind you</li>
+                  <li>{t("helpPhone1")}</li>
+                  <li>{t("helpPhone2")}</li>
+                  <li>{t("helpPhone3")}</li>
                 </ul>
               </div>
               <div>
-                <SectionTitle>Keyboard</SectionTitle>
+                <SectionTitle>{t("helpKeyboard")}</SectionTitle>
                 <ul className="space-y-1.5 text-sm text-slate-300">
                   <li>
-                    P1 <Key>←</Key> <Key>→</Key> aim · <Key>↑</Key> thrust ·{" "}
-                    <Key>↓</Key> reverse
+                    {t("p1")} <Key>←</Key> <Key>→</Key> {t("aim")} ·{" "}
+                    <Key>↑</Key> {t("thrust")} · <Key>↓</Key> {t("reverse")}
                   </li>
                   <li>
-                    P2 <Key>A</Key> <Key>D</Key> aim · <Key>W</Key> thrust ·{" "}
-                    <Key>S</Key> reverse
+                    {t("p2")} <Key>A</Key> <Key>D</Key> {t("aim")} ·{" "}
+                    <Key>W</Key> {t("thrust")} · <Key>S</Key> {t("reverse")}
                   </li>
                   <li>
-                    <Key>F</Key> or the corner expand icon — full screen
+                    <Key>F</Key> {t("helpFullscreenCorner")}
                   </li>
                 </ul>
               </div>
             </div>
             <div className="mt-5 space-y-1.5 text-sm text-slate-400">
               <p>
-                Holding thrust builds up <b className="text-slate-200">charge</b> —
-                the longer you hold, the harder you accelerate. New thrust adds to your
-                current velocity, so steer with momentum.
+                <Trans
+                  k="helpCharge"
+                  values={{
+                    charge: (
+                      <b className="text-slate-200">{t("charge")}</b>
+                    ),
+                  }}
+                />
               </p>
               <p>
-                <Key>P</Key> or <Key>Esc</Key> pause · <Key>R</Key> restart ·{" "}
-                <Key>F</Key> full screen
+                <Key>P</Key> {t("or")} <Key>Esc</Key> {t("pause")} ·{" "}
+                <Key>R</Key> {t("restart")} · <Key>F</Key> {t("fullScreen")}
               </p>
             </div>
           </Panel>

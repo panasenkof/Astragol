@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useI18n } from "@/i18n";
 
 /** Height reserved for a touch control strip (excluding safe-area). */
 export const TOUCH_STRIP_H = 124;
@@ -74,6 +75,7 @@ export default function PlayerTouchControls({
   onThrust: (held: boolean) => void;
   headsUp: boolean;
 }) {
+  const { t } = useI18n();
   const stickRef = useRef<HTMLDivElement>(null);
   const stickPtr = useRef<number | null>(null);
   const thrustPtr = useRef<number | null>(null);
@@ -95,8 +97,8 @@ export default function PlayerTouchControls({
       dy = (dy / mag) * max;
     }
     setKnob({ x: dx, y: dy, active: true });
-    const t = mag / max;
-    if (t > DEADZONE) onAim(screenAim(dx, dy, headsUp));
+    const magT = mag / max;
+    if (magT > DEADZONE) onAim(screenAim(dx, dy, headsUp));
   };
 
   const releaseStick = () => {
@@ -203,7 +205,7 @@ export default function PlayerTouchControls({
 
       <button
         type="button"
-        aria-label="Boost"
+        aria-label={t("boost")}
         className="flex shrink-0 items-center justify-center rounded-full border backdrop-blur-md"
         style={{
           width: 80,
