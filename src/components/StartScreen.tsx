@@ -1,7 +1,12 @@
 import { useState, type ReactNode } from "react";
 import StarField from "./StarField";
 import { NeonButton, Panel, SectionTitle } from "./ui";
-import type { GameMode, ScoreEntry } from "@/game/types";
+import {
+  AI_DIFFICULTY_OPTIONS,
+  type AiDifficulty,
+  type GameMode,
+  type ScoreEntry,
+} from "@/game/types";
 import { rankScores } from "@/game/storage";
 
 function fmtTime(s: number) {
@@ -30,10 +35,12 @@ export default function StartScreen({
   onStart,
   onSettings,
   scores,
+  aiDifficulty,
 }: {
   onStart: (mode: GameMode) => void;
   onSettings: () => void;
   scores: ScoreEntry[];
+  aiDifficulty: AiDifficulty;
 }) {
   const [showHelp, setShowHelp] = useState(false);
   const top = rankScores(scores).slice(0, 5);
@@ -65,7 +72,9 @@ export default function StartScreen({
               >
                 ▶ 1 Player&nbsp;&nbsp;
                 <span className="text-xs font-bold opacity-70">
-                  vs&nbsp;CPU
+                  vs&nbsp;CPU ·{" "}
+                  {AI_DIFFICULTY_OPTIONS.find((o) => o.id === aiDifficulty)
+                    ?.label ?? "Normal"}
                 </span>
               </NeonButton>
               <NeonButton

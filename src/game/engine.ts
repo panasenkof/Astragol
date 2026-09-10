@@ -15,6 +15,7 @@ import {
   SHIP_R,
   SHIP_ROT_SPEED,
   WALL_REST,
+  AI_PROFILES,
 } from "./constants";
 import type { GameMode, Settings } from "./types";
 
@@ -151,9 +152,11 @@ export class Game {
   mode: GameMode;
   input: InputState = { p1: emptyPad(), p2: emptyPad() };
   onEvent?: (e: GameEvent) => void;
-  aiSkill = 0.75;
   /** Seconds the AI has been pinning a slow ball into a corner. */
   private aiStuckT = 0;
+  /** Easy-mode reaction freeze: remaining seconds of the current hold/go window. */
+  private aiHoldT = 0;
+  private aiHolding = false;
 
   constructor(settings: Settings, mode: GameMode, targetScore: number) {
     this.settings = settings;
@@ -228,6 +231,8 @@ export class Game {
     this.ball.y = FIELD_H / 2;
     this.ball.vx = this.ball.vy = 0;
     this.aiStuckT = 0;
+    this.aiHoldT = 0;
+    this.aiHolding = false;
     this.ships[0].color = this.settings.p1Color;
     this.ships[1].color = this.settings.p2Color;
     this.ships[0].ai = false;
@@ -313,8 +318,10 @@ export class Game {
       if (pad.aimStick != null) {
         ship.aim = pad.aimStick;
       } else {
-        if (pad.left) ship.aim -= SHIP_ROT_SPEED * dt;
-        if (pad.right) ship.aim += SHIP_ROT_SPEED * dt;
+        const rot =
+          SHIP_ROT_SPEED * (ship.ai ? this.aiProfile().rotMul : 1);
+        if (pad.left) ship.aim -= rot * dt;
+        if (pad.right) ship.aim += rot * dt;
       }
       ship.aim = norm(ship.aim);
 
@@ -387,8 +394,13 @@ export class Game {
     return { x, y };
   }
 
+  private aiProfile() {
+    return AI_PROFILES[this.settings.aiDifficulty] ?? AI_PROFILES.normal;
+  }
+
   private aiPad(ship: Ship, dt: number): PadInput {
     const ball = this.ball;
+    const profile = this.aiProfile();
     const attackDir = -1; // AI is always player 2 -> attacks the left goal
     const contact = SHIP_R + BALL_R;
     const dToBall = Math.hypot(ball.x - ship.x, ball.y - ship.y);
@@ -420,10 +432,16 @@ export class Game {
       tx = ball.x;
       ty = ball.y;
     } else {
-      const px = ball.x + ball.vx * 0.13;
-      const py = ball.y + ball.vy * 0.13;
-      tx = px - attackDir * (contact + 4);
-      ty = py + Math.sin(this.time * 1.6) * 14;
+      const px = ball.x + ball.vx * profile.predict;
+      const py = ball.y + ball.vy * profile.predict;
+      const headingToOwnGoal = ball.vx > 40 && ball.x > FIELD_W * 0.45;
+      if (profile.defend && headingToOwnGoal) {
+        tx = px;
+        ty = py;
+      } else {
+        tx = px - attackDir * (contact + 4);
+        ty = py + Math.sin(this.time * 1.6) * profile.wander;
+      }
     }
 
     let desired: number;
@@ -437,15 +455,29 @@ export class Game {
       desired = norm(desired + Math.PI);
       reverse = false;
     }
-    if (!corner) desired += rand(-1, 1) * (1 - this.aiSkill) * 0.5;
+    if (!corner) desired += rand(-1, 1) * (1 - profile.skill) * 0.5;
     const diff = norm(desired - ship.aim);
     const nearBall = dToBall < contact + 32;
     const dTarget = Math.hypot(tx - ship.x, ty - ship.y);
-    const aimed = Math.abs(diff) < 0.6;
+    const aimed = Math.abs(diff) < profile.aimSlack;
+    if (profile.hesitate > 0) {
+      this.aiHoldT -= dt;
+      if (this.aiHoldT <= 0) {
+        this.aiHolding = Math.random() < profile.hesitate;
+        this.aiHoldT = this.aiHolding ? rand(0.18, 0.45) : rand(0.5, 1.1);
+      }
+    } else {
+      this.aiHolding = false;
+    }
+    const thrust =
+      !reverse &&
+      aimed &&
+      (nearBall || dTarget > 36 || !!corner) &&
+      !this.aiHolding;
     return {
-      left: diff < -0.14,
-      right: diff > 0.14,
-      up: !reverse && aimed && (nearBall || dTarget > 36 || !!corner),
+      left: diff < -profile.turnDead,
+      right: diff > profile.turnDead,
+      up: thrust,
       down: reverse && Math.abs(diff) < 1.2,
       aimStick: null,
     };

@@ -1,12 +1,21 @@
 import { STORAGE_SCORES, STORAGE_SETTINGS } from "./constants";
-import { DEFAULT_SETTINGS, type ScoreEntry, type Settings } from "./types";
+import {
+  DEFAULT_SETTINGS,
+  isAiDifficulty,
+  type ScoreEntry,
+  type Settings,
+} from "./types";
 
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_SETTINGS);
     if (!raw) return { ...DEFAULT_SETTINGS };
     const parsed = JSON.parse(raw) as Partial<Settings>;
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    const merged = { ...DEFAULT_SETTINGS, ...parsed };
+    if (!isAiDifficulty(merged.aiDifficulty)) {
+      merged.aiDifficulty = DEFAULT_SETTINGS.aiDifficulty;
+    }
+    return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

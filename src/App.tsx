@@ -73,6 +73,7 @@ export default function App() {
             setScreen("settings");
           }}
           scores={scores}
+          aiDifficulty={settings.aiDifficulty}
         />
       )}
       {screen === "settings" && (

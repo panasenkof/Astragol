@@ -1,3 +1,5 @@
+import type { AiDifficulty } from "./types";
+
 // ---------------------------------------------------------------------------
 // Core field geometry & physics tuning. All gameplay happens in a fixed
 // "virtual field" coordinate space (1000 x 640) that is scaled to fit the
@@ -30,6 +32,51 @@ export const CHARGE_TIME = 0.6; // seconds to reach full thrust charge
 export const CHARGE_MIN = 0.3; // starting thrust multiplier
 
 export const TARGET_SCORE = 5; // first to N goals wins the match
+
+/** CPU behaviour knobs for 1-player matches. Tuned so Easy/Normal/Hard feel distinct. */
+export interface AiProfile {
+  skill: number;
+  predict: number;
+  rotMul: number;
+  aimSlack: number;
+  turnDead: number;
+  hesitate: number;
+  wander: number;
+  defend: boolean;
+}
+
+export const AI_PROFILES: Record<AiDifficulty, AiProfile> = {
+  easy: {
+    skill: 0.32,
+    predict: 0.03,
+    rotMul: 0.52,
+    aimSlack: 1.05,
+    turnDead: 0.22,
+    hesitate: 0.18,
+    wander: 28,
+    defend: false,
+  },
+  normal: {
+    skill: 0.75,
+    predict: 0.13,
+    rotMul: 1,
+    aimSlack: 0.6,
+    turnDead: 0.14,
+    hesitate: 0,
+    wander: 14,
+    defend: false,
+  },
+  hard: {
+    skill: 0.96,
+    predict: 0.22,
+    rotMul: 1.4,
+    aimSlack: 0.28,
+    turnDead: 0.08,
+    hesitate: 0,
+    wander: 4,
+    defend: true,
+  },
+};
 
 export const STORAGE_SETTINGS = "nebula-arena:settings:v1";
 export const STORAGE_SCORES = "nebula-arena:scores:v1";
