@@ -5,6 +5,8 @@ import { addScore } from "@/game/storage";
 import { FIELD_H, FIELD_W, GOAL_DEPTH, TARGET_SCORE } from "@/game/constants";
 import type { GameMode, Settings } from "@/game/types";
 import { NeonButton } from "./ui";
+import FullscreenButton from "./FullscreenButton";
+import { useFullscreen } from "@/hooks/useFullscreen";
 import PlayerTouchControls, { TOUCH_STRIP_H } from "./PlayerTouchControls";
 
 interface Hud {
@@ -522,14 +524,17 @@ export default function GameScreen({
               />
             </div>
           </div>
-          {!paused && !over && (
-            <button
-              onClick={togglePause}
-              className="absolute right-3 top-3 z-30 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-slate-200 backdrop-blur-md transition hover:bg-black/60"
-            >
-              ❚❚
-            </button>
-          )}
+          <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
+            <FullscreenButton compact />
+            {!paused && !over && (
+              <button
+                onClick={togglePause}
+                className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-slate-200 backdrop-blur-md transition hover:bg-black/60"
+              >
+                ❚❚
+              </button>
+            )}
+          </div>
         </>
       )}
 
@@ -665,6 +670,13 @@ export default function GameScreen({
               onExit={onExit}
             />
           }
+          p2={
+            <PauseCard
+              onResume={togglePause}
+              onRestart={restart}
+              onExit={onExit}
+            />
+          }
         />
       )}
 
@@ -794,6 +806,7 @@ function PauseCard({
   onRestart: () => void;
   onExit: () => void;
 }) {
+  const fullscreen = useFullscreen();
   return (
     <>
       <h2 className="text-center text-3xl font-black tracking-[0.2em] text-cyan-100">
@@ -801,6 +814,17 @@ function PauseCard({
       </h2>
       <div className="mt-5 grid w-full gap-3">
         <NeonButton onClick={onResume}>▶ Resume</NeonButton>
+        {fullscreen.supported && (
+          <NeonButton
+            variant="soft"
+            onClick={() => {
+              audio.click();
+              void fullscreen.toggle();
+            }}
+          >
+            {fullscreen.active ? "Exit full screen" : "⛶ Full screen"}
+          </NeonButton>
+        )}
         <NeonButton variant="soft" onClick={onRestart}>
           ↺ Restart match
         </NeonButton>

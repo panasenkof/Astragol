@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import StarField from "./StarField";
+import FullscreenButton from "./FullscreenButton";
 import { NeonButton, Panel, SectionTitle } from "./ui";
 import {
   AI_DIFFICULTY_OPTIONS,
@@ -48,6 +49,9 @@ export default function StartScreen({
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden">
       <StarField />
+      <div className="absolute right-3 top-[max(0.75rem,calc(env(safe-area-inset-top)+0.5rem))] z-20">
+        <FullscreenButton compact />
+      </div>
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-5xl flex-col items-center justify-center gap-8 px-5 pt-[max(2.5rem,calc(env(safe-area-inset-top)+1rem))] pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
         <div className="text-center">
           <Logo />
@@ -157,6 +161,9 @@ export default function StartScreen({
                     P2 <Key>A</Key> <Key>D</Key> aim · <Key>W</Key> thrust ·{" "}
                     <Key>S</Key> reverse
                   </li>
+                  <li>
+                    <Key>F</Key> or the corner expand icon — full screen
+                  </li>
                 </ul>
               </div>
             </div>
@@ -167,7 +174,8 @@ export default function StartScreen({
                 current velocity, so steer with momentum.
               </p>
               <p>
-                <Key>P</Key> or <Key>Esc</Key> pause · <Key>R</Key> restart
+                <Key>P</Key> or <Key>Esc</Key> pause · <Key>R</Key> restart ·{" "}
+                <Key>F</Key> full screen
               </p>
             </div>
           </Panel>

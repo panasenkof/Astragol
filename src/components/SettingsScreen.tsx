@@ -1,4 +1,5 @@
 import StarField from "./StarField";
+import FullscreenButton from "./FullscreenButton";
 import { NeonButton, Panel, SectionTitle, Slider, Toggle } from "./ui";
 import { audio } from "@/game/audio";
 import { AI_DIFFICULTY_OPTIONS, type Settings } from "@/game/types";
@@ -65,13 +66,16 @@ export default function SettingsScreen({
     <div className="relative min-h-[100dvh] w-full overflow-hidden">
       <StarField />
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-3xl flex-col gap-5 px-5 pt-[max(2rem,calc(env(safe-area-inset-top)+0.75rem))] pb-[max(2rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-black tracking-[0.2em] text-cyan-100">
             SETTINGS
           </h1>
-          <NeonButton variant="soft" onClick={onBack}>
-            ← Back
-          </NeonButton>
+          <div className="flex items-center gap-2">
+            <FullscreenButton compact />
+            <NeonButton variant="soft" onClick={onBack}>
+              ← Back
+            </NeonButton>
+          </div>
         </div>
 
         <Panel className="p-6">
