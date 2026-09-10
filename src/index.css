@@ -44,6 +44,19 @@ canvas {
   display: block;
 }
 
+/* Shrink single-line labels to the button width so long locales still fit. */
+.choice-label {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  white-space: nowrap;
+  font-size: clamp(0.65rem, calc(100cqw / 8), 0.875rem);
+}
+
 @keyframes pop {
   0% {
     transform: scale(0.35);

@@ -56,10 +56,6 @@ export const en = {
   elasticity: "Collision elasticity (bounciness)",
   physicsHint:
     "Heavier ships shove the ball harder. Higher elasticity makes every bounce and deflection snappier.",
-  controls: "Controls",
-  disableDown: "Disable the 'down' key (thrust only in arrow direction)",
-  disableDownHint:
-    "When enabled, pressing ↓ / S does nothing — handy if you keep back-thrusting by accident.",
   teamColours: "Team colours",
   p1Glow: "Player 1 (left) glow",
   p2Glow: "Player 2 (right) glow",
@@ -167,9 +163,6 @@ export const zh: Messages = {
   weightTonnes: "{n} 吨",
   elasticity: "碰撞弹性（反弹）",
   physicsHint: "飞船越重，推球越猛。弹性越高，每次碰撞和变向越干脆。",
-  controls: "操控",
-  disableDown: "禁用“向下”键（只朝箭头方向推进）",
-  disableDownHint: "开启后，按 ↓ / S 无效——免得不小心向后喷气。",
   teamColours: "队伍颜色",
   p1Glow: "玩家 1（左）光效",
   p2Glow: "玩家 2（右）光效",
@@ -273,10 +266,6 @@ export const hi: Messages = {
   elasticity: "टकराव लोच (उछाल)",
   physicsHint:
     "भारी जहाज़ गेंद को ज़ोर से धकेलते हैं। ज़्यादा लोच हर उछाल और मोड़ को तेज़ बनाती है।",
-  controls: "नियंत्रण",
-  disableDown: "'नीचे' कुंजी बंद करें (केवल तीर की दिशा में थ्रस्ट)",
-  disableDownHint:
-    "चालू होने पर ↓ / S कुछ नहीं करता — अगर आप गलती से पीछे धकेलते रहते हैं तो उपयोगी।",
   teamColours: "टीम रंग",
   p1Glow: "खिलाड़ी 1 (बाएँ) चमक",
   p2Glow: "खिलाड़ी 2 (दाएँ) चमक",
@@ -382,10 +371,6 @@ export const es: Messages = {
   elasticity: "Elasticidad de colisión (rebote)",
   physicsHint:
     "Las naves más pesadas empujan más fuerte. Mayor elasticidad hace cada rebote más vivo.",
-  controls: "Controles",
-  disableDown: "Desactivar la tecla «abajo» (impulso solo en la dirección de la flecha)",
-  disableDownHint:
-    "Si está activo, pulsar ↓ / S no hace nada: útil si retrocedes sin querer.",
   teamColours: "Colores de equipo",
   p1Glow: "Brillo del jugador 1 (izquierda)",
   p2Glow: "Brillo del jugador 2 (derecha)",
@@ -492,10 +477,6 @@ export const fr: Messages = {
   elasticity: "Élasticité des collisions (rebond)",
   physicsHint:
     "Les vaisseaux plus lourds poussent plus fort. Plus d’élasticité rend chaque rebond plus vif.",
-  controls: "Commandes",
-  disableDown: "Désactiver la touche « bas » (poussée seulement dans le sens de la flèche)",
-  disableDownHint:
-    "Une fois activé, ↓ / S ne fait rien — pratique si vous reculez par accident.",
   teamColours: "Couleurs d’équipe",
   p1Glow: "Lueur joueur 1 (gauche)",
   p2Glow: "Lueur joueur 2 (droite)",
@@ -602,10 +583,6 @@ export const ar: Messages = {
   elasticity: "مرونة التصادم (الارتداد)",
   physicsHint:
     "السفن الأثقل تدفع الكرة بقوة أكبر. ارتفاع المرونة يجعل كل ارتداد أسرع.",
-  controls: "التحكم",
-  disableDown: "تعطيل مفتاح «أسفل» (الدفع باتجاه السهم فقط)",
-  disableDownHint:
-    "عند التفعيل، الضغط على ↓ / S لا يفعل شيئاً — مفيد إن كنت تندفع للخلف دون قصد.",
   teamColours: "ألوان الفريق",
   p1Glow: "توهج اللاعب 1 (يسار)",
   p2Glow: "توهج اللاعب 2 (يمين)",
@@ -711,10 +688,6 @@ export const ru: Messages = {
   elasticity: "Упругость столкновений (отскок)",
   physicsHint:
     "Более тяжёлые корабли сильнее толкают мяч. Выше упругость — резче каждый отскок и рикошет.",
-  controls: "Управление",
-  disableDown: "Отключить клавишу «вниз» (тяга только по стрелке)",
-  disableDownHint:
-    "Если включено, ↓ / S ничего не делают — полезно, если вы случайно даёте задний ход.",
   teamColours: "Цвета команд",
   p1Glow: "Свечение игрока 1 (слева)",
   p2Glow: "Свечение игрока 2 (справа)",

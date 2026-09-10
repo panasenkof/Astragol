@@ -1,13 +1,12 @@
 import StarField from "./StarField";
 import FullscreenButton from "./FullscreenButton";
-import { NeonButton, Panel, SectionTitle, Slider, Toggle } from "./ui";
+import LanguageSelect from "./LanguageSelect";
+import { NeonButton, Panel, SectionTitle, Slider, Toggle, FitText } from "./ui";
 import { audio } from "@/game/audio";
 import { AI_DIFFICULTY_OPTIONS, type Settings } from "@/game/types";
 import {
   AI_BLURB_KEYS,
   AI_LABEL_KEYS,
-  LOCALES,
-  LOCALE_META,
   localeUsesWideTracking,
   useI18n,
   type LocaleSetting,
@@ -60,44 +59,6 @@ function ColorPicker({
   );
 }
 
-function LangButton({
-  active,
-  label,
-  lang,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  lang?: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      lang={lang}
-      onClick={onClick}
-      className="w-full rounded-2xl border px-3 py-3 text-center transition"
-      style={{
-        borderColor: active
-          ? "rgba(56,189,248,0.7)"
-          : "rgba(255,255,255,0.1)",
-        background: active
-          ? "rgba(56,189,248,0.16)"
-          : "rgba(255,255,255,0.04)",
-        boxShadow: active ? "0 0 22px -6px rgba(56,189,248,0.7)" : "none",
-      }}
-    >
-      <span
-        className={`block text-sm font-bold ${
-          active ? "text-cyan-100" : "text-slate-300"
-        }`}
-      >
-        {label}
-      </span>
-    </button>
-  );
-}
-
 export default function SettingsScreen({
   settings,
   onChange,
@@ -125,39 +86,22 @@ export default function SettingsScreen({
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-3xl flex-col gap-5 px-5 pt-[max(2rem,calc(env(safe-area-inset-top)+0.75rem))] pb-[max(2rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
         <div className="flex items-center justify-between gap-3">
           <h1
-            className={`text-2xl font-black text-cyan-100 ${titleTrack}`}
+            className={`min-w-0 text-2xl font-black text-cyan-100 ${titleTrack}`}
           >
             {t("settingsTitle")}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <FullscreenButton compact />
-            <NeonButton variant="soft" onClick={onBack}>
+            <NeonButton variant="soft" className="px-3 sm:px-5" onClick={onBack}>
               {rtl ? "→" : "←"} {t("back")}
             </NeonButton>
           </div>
         </div>
 
-        <Panel className="p-6">
+        <Panel className="relative z-20 overflow-visible p-6">
           <SectionTitle>{t("language")}</SectionTitle>
           <p className="mb-4 text-sm text-slate-400">{t("languageHint")}</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div className="col-span-2 sm:col-span-4">
-              <LangButton
-                active={settings.locale === "auto"}
-                label={t("languageDevice")}
-                onClick={() => setLocale("auto")}
-              />
-            </div>
-            {LOCALES.map((id) => (
-              <LangButton
-                key={id}
-                active={settings.locale === id}
-                label={LOCALE_META[id].nativeName}
-                lang={LOCALE_META[id].htmlLang}
-                onClick={() => setLocale(id)}
-              />
-            ))}
-          </div>
+          <LanguageSelect value={settings.locale} onChange={setLocale} />
         </Panel>
 
         <Panel className="p-6">
@@ -196,8 +140,8 @@ export default function SettingsScreen({
               }
               onChange={(v) => onChange({ sfxVolume: v })}
             />
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
                 <Toggle
                   label={t("muteSfx")}
                   checked={settings.sfxMuted}
@@ -206,6 +150,7 @@ export default function SettingsScreen({
               </div>
               <NeonButton
                 variant="soft"
+                className="shrink-0"
                 disabled={settings.sfxMuted}
                 onClick={() => {
                   audio.resume();
@@ -232,7 +177,7 @@ export default function SettingsScreen({
                     onChange({ aiDifficulty: opt.id });
                     audio.click();
                   }}
-                  className="rounded-2xl border px-3 py-3 text-center transition"
+                  className="@container min-w-0 rounded-2xl border px-1.5 py-3 text-center transition sm:px-2.5"
                   style={{
                     borderColor: active
                       ? "rgba(56,189,248,0.7)"
@@ -245,13 +190,11 @@ export default function SettingsScreen({
                       : "none",
                   }}
                 >
-                  <span
-                    className={`block text-sm font-bold tracking-wide ${
-                      active ? "text-cyan-100" : "text-slate-300"
-                    }`}
+                  <FitText
+                    className={active ? "text-cyan-100" : "text-slate-300"}
                   >
                     {t(AI_LABEL_KEYS[opt.id])}
-                  </span>
+                  </FitText>
                 </button>
               );
             })}
@@ -300,16 +243,6 @@ export default function SettingsScreen({
         </Panel>
 
         <Panel className="p-6">
-          <SectionTitle>{t("controls")}</SectionTitle>
-          <Toggle
-            label={t("disableDown")}
-            checked={settings.downDisabled}
-            onChange={(v) => onChange({ downDisabled: v })}
-          />
-          <p className="mt-3 text-xs text-slate-500">{t("disableDownHint")}</p>
-        </Panel>
-
-        <Panel className="p-6">
           <SectionTitle>{t("teamColours")}</SectionTitle>
           <div className="grid gap-6 sm:grid-cols-2">
             <ColorPicker
@@ -327,7 +260,7 @@ export default function SettingsScreen({
           </div>
         </Panel>
 
-        <div className="flex justify-between pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
           <NeonButton
             variant="ghost"
             onClick={() => {

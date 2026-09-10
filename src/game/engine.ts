@@ -329,14 +329,13 @@ export class Game {
       ship.upCharge = pad.up
         ? clamp(ship.upCharge + rate, 0, 1)
         : Math.max(0, ship.upCharge - rate * 4);
-      ship.downCharge =
-        pad.down && !this.settings.downDisabled
-          ? clamp(ship.downCharge + rate, 0, 1)
-          : Math.max(0, ship.downCharge - rate * 4);
+      ship.downCharge = pad.down
+        ? clamp(ship.downCharge + rate, 0, 1)
+        : Math.max(0, ship.downCharge - rate * 4);
 
       let thrust = 0;
       if (pad.up) thrust += CHARGE_MIN + (1 - CHARGE_MIN) * ship.upCharge;
-      if (pad.down && !this.settings.downDisabled)
+      if (pad.down)
         thrust -= CHARGE_MIN + (1 - CHARGE_MIN) * ship.downCharge;
       ship.thrust = Math.abs(thrust);
 
@@ -450,10 +449,6 @@ export class Game {
       desired = Math.atan2(ball.y - ship.y, ball.x - ship.x);
     } else {
       desired = Math.atan2(ty - ship.y, tx - ship.x);
-    }
-    if (reverse && this.settings.downDisabled) {
-      desired = norm(desired + Math.PI);
-      reverse = false;
     }
     if (!corner) desired += rand(-1, 1) * (1 - profile.skill) * 0.5;
     const diff = norm(desired - ship.aim);

@@ -84,30 +84,35 @@ export default function StartScreen({
           <Panel className="p-6">
             <div className="grid gap-3">
               <NeonButton
-                className="py-4 text-lg"
+                className="flex w-full flex-col gap-1 py-4 text-lg sm:flex-row sm:items-center sm:justify-center sm:gap-3"
                 onClick={() => onStart("1p")}
               >
-                ▶ {t("play1Player")}&nbsp;&nbsp;
+                <span>▶ {t("play1Player")}</span>
                 <span className="text-xs font-bold opacity-70">
                   {t("vsCpu", { difficulty })}
                 </span>
               </NeonButton>
               <NeonButton
                 variant="soft"
-                className="py-4 text-lg"
+                className="flex w-full flex-col gap-1 py-4 text-lg sm:flex-row sm:items-center sm:justify-center sm:gap-3"
                 onClick={() => onStart("2p")}
               >
-                👥 {t("play2Players")}&nbsp;&nbsp;
+                <span>👥 {t("play2Players")}</span>
                 <span className="text-xs font-bold opacity-70">
                   {t("sitOpposite")}
                 </span>
               </NeonButton>
               <div className="grid grid-cols-2 gap-3 pt-1">
-                <NeonButton variant="ghost" onClick={onSettings}>
+                <NeonButton
+                  variant="ghost"
+                  className="w-full px-2.5 text-sm sm:px-5 sm:text-base"
+                  onClick={onSettings}
+                >
                   ⚙ {t("settings")}
                 </NeonButton>
                 <NeonButton
                   variant="ghost"
+                  className="w-full px-2.5 text-sm sm:px-5 sm:text-base"
                   onClick={() => setShowHelp((v) => !v)}
                 >
                   ? {t("howToPlay")}
