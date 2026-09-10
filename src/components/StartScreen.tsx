@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import StarField from "./StarField";
+import FullscreenButton from "./FullscreenButton";
 import { NeonButton, Panel, SectionTitle } from "./ui";
 import {
   type AiDifficulty,
@@ -58,6 +59,9 @@ export default function StartScreen({
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden">
       <StarField />
+      <div className="absolute right-3 top-[max(0.75rem,calc(env(safe-area-inset-top)+0.5rem))] z-20">
+        <FullscreenButton compact />
+      </div>
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-5xl flex-col items-center justify-center gap-8 px-5 pt-[max(2.5rem,calc(env(safe-area-inset-top)+1rem))] pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
         <div className="text-center">
           <Logo />
@@ -168,6 +172,9 @@ export default function StartScreen({
                     {t("p2")} <Key>A</Key> <Key>D</Key> {t("aim")} ·{" "}
                     <Key>W</Key> {t("thrust")} · <Key>S</Key> {t("reverse")}
                   </li>
+                  <li>
+                    <Key>F</Key> {t("helpFullscreenCorner")}
+                  </li>
                 </ul>
               </div>
             </div>
@@ -184,7 +191,7 @@ export default function StartScreen({
               </p>
               <p>
                 <Key>P</Key> {t("or")} <Key>Esc</Key> {t("pause")} ·{" "}
-                <Key>R</Key> {t("restart")}
+                <Key>R</Key> {t("restart")} · <Key>F</Key> {t("fullScreen")}
               </p>
             </div>
           </Panel>

@@ -5,6 +5,7 @@ import GameScreen from "@/components/GameScreen";
 import InstallHint from "@/components/InstallHint";
 import { audio } from "@/game/audio";
 import { loadScores, loadSettings, saveSettings } from "@/game/storage";
+import { useFullscreen } from "@/hooks/useFullscreen";
 import {
   DEFAULT_SETTINGS,
   type GameMode,
@@ -20,6 +21,7 @@ export default function App() {
   const [mode, setMode] = useState<GameMode>("1p");
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
   const [scores, setScores] = useState<ScoreEntry[]>(() => loadScores());
+  const fullscreen = useFullscreen();
 
   useEffect(() => {
     saveSettings(settings);
@@ -49,6 +51,27 @@ export default function App() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "KeyF") return;
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (!fullscreen.supported) return;
+      e.preventDefault();
+      void fullscreen.toggle();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [fullscreen.supported, fullscreen.toggle]);
 
   const patchSettings = useCallback((patch: Partial<Settings>) => {
     setSettings((s) => ({ ...s, ...patch }));

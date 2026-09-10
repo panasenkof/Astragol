@@ -27,6 +27,9 @@ export const en = {
   or: "or",
   pause: "pause",
   restart: "restart",
+  fullScreen: "Full screen",
+  exitFullScreen: "Exit full screen",
+  helpFullscreenCorner: "or the corner expand icon — full screen",
 
   settingsTitle: "Settings",
   back: "Back",
@@ -136,6 +139,9 @@ export const zh: Messages = {
   or: "或",
   pause: "暂停",
   restart: "重开",
+  fullScreen: "全屏",
+  exitFullScreen: "退出全屏",
+  helpFullscreenCorner: "或角落的展开图标 — 全屏",
 
   settingsTitle: "设置",
   back: "返回",
@@ -238,6 +244,9 @@ export const hi: Messages = {
   or: "या",
   pause: "विराम",
   restart: "फिर शुरू",
+  fullScreen: "पूर्ण स्क्रीन",
+  exitFullScreen: "पूर्ण स्क्रीन बंद करें",
+  helpFullscreenCorner: "या कोने का विस्तार आइकन — पूर्ण स्क्रीन",
 
   settingsTitle: "सेटिंग्स",
   back: "वापस",
@@ -344,6 +353,9 @@ export const es: Messages = {
   or: "o",
   pause: "pausa",
   restart: "reiniciar",
+  fullScreen: "Pantalla completa",
+  exitFullScreen: "Salir de pantalla completa",
+  helpFullscreenCorner: "o el icono de expandir en la esquina — pantalla completa",
 
   settingsTitle: "Ajustes",
   back: "Atrás",
@@ -451,6 +463,9 @@ export const fr: Messages = {
   or: "ou",
   pause: "pause",
   restart: "recommencer",
+  fullScreen: "Plein écran",
+  exitFullScreen: "Quitter le plein écran",
+  helpFullscreenCorner: "ou l’icône d’agrandissement dans le coin — plein écran",
 
   settingsTitle: "Réglages",
   back: "Retour",
@@ -558,6 +573,9 @@ export const ar: Messages = {
   or: "أو",
   pause: "إيقاف",
   restart: "إعادة",
+  fullScreen: "ملء الشاشة",
+  exitFullScreen: "الخروج من ملء الشاشة",
+  helpFullscreenCorner: "أو أيقونة التوسيع في الزاوية — ملء الشاشة",
 
   settingsTitle: "الإعدادات",
   back: "رجوع",
@@ -664,6 +682,9 @@ export const ru: Messages = {
   or: "или",
   pause: "пауза",
   restart: "рестарт",
+  fullScreen: "Полный экран",
+  exitFullScreen: "Выйти из полного экрана",
+  helpFullscreenCorner: "или значок разворота в углу — полный экран",
 
   settingsTitle: "Настройки",
   back: "Назад",

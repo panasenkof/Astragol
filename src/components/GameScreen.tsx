@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Game, emptyPad, type GameEvent, type Viewport } from "@/game/engine";
 import { audio } from "@/game/audio";
 import { addScore } from "@/game/storage";
-import { FIELD_H, FIELD_W, TARGET_SCORE } from "@/game/constants";
+import { FIELD_H, FIELD_W, GOAL_DEPTH, TARGET_SCORE } from "@/game/constants";
 import type { GameMode, Settings } from "@/game/types";
 import { NeonButton } from "./ui";
+import FullscreenButton from "./FullscreenButton";
+import { useFullscreen } from "@/hooks/useFullscreen";
 import PlayerTouchControls, { TOUCH_STRIP_H } from "./PlayerTouchControls";
 import { localeUsesWideTracking, useI18n, type Translate } from "@/i18n";
 
@@ -42,17 +44,29 @@ function computeView(
   w: number,
   h: number,
   dpr: number,
+  mode: GameMode,
   headsUp: boolean,
   touch: boolean
 ): Viewport {
-  if (headsUp) {
-    const padTop = TOUCH_STRIP_H + 8;
-    const padBottom = TOUCH_STRIP_H + 8;
+  // 2P heads-up is always vertical. 1P matches that in portrait and
+  // unfolds to a horizontal pitch in landscape.
+  const rotated = headsUp || (mode === "1p" && h >= w);
+  if (rotated) {
+    // World +x (P2 / CPU goal) maps to the top of the screen.
+    // Touch 1P uses the same vertical insets as 2P so the pitch sits
+    // in the same place; keyboard keeps a HUD gutter.
+    const padTop = headsUp || touch ? TOUCH_STRIP_H + 8 : 84;
+    const padBottom = headsUp
+      ? TOUCH_STRIP_H + 8
+      : touch
+        ? TOUCH_STRIP_H + 16
+        : 12;
     const availW = Math.max(1, w - 16);
     const availH = Math.max(1, h - padTop - padBottom);
+    const spanH = FIELD_W + (headsUp || touch ? 0 : GOAL_DEPTH * 2);
     const scale = Math.max(
       0.12,
-      Math.min(availW / FIELD_H, availH / FIELD_W)
+      Math.min(availW / FIELD_H, availH / spanH)
     );
     const cx = w / 2;
     const cy = padTop + availH / 2;
@@ -68,11 +82,17 @@ function computeView(
       dpr,
     };
   }
-  const padTop = 84;
-  const padBottom = touch ? TOUCH_STRIP_H + 16 : 12;
+  // Landscape: overlay HUD (and touch pads on short screens) so the
+  // horizontal pitch can actually use the width.
+  const short = h < 520;
+  const padTop = short ? 16 : 84;
+  const padBottom = touch ? (short ? 28 : TOUCH_STRIP_H + 16) : 12;
   const availW = w - 20;
   const availH = h - padTop - padBottom;
-  const scale = Math.max(0.12, Math.min(availW / FIELD_W, availH / FIELD_H));
+  const scale = Math.max(
+    0.12,
+    Math.min(availW / (FIELD_W + GOAL_DEPTH * 2), availH / FIELD_H)
+  );
   const ox = (w - FIELD_W * scale) / 2;
   const oy = padTop + (availH - FIELD_H * scale) / 2;
   return {
@@ -137,6 +157,7 @@ export default function GameScreen({
   const overRefActive = () => overRef.current;
 
   const headsUp = mode === "2p" && isTouch && narrow;
+  const fieldRotated = headsUp || (mode === "1p" && portrait);
   const headsUpRef = useRef(headsUp);
   const touchRef = useRef(isTouch);
   headsUpRef.current = headsUp;
@@ -354,7 +375,14 @@ export default function GameScreen({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       game.render(
         ctx,
-        computeView(w, h, dpr, headsUpRef.current, touchRef.current)
+        computeView(
+          w,
+          h,
+          dpr,
+          mode,
+          headsUpRef.current,
+          touchRef.current
+        )
       );
       syncHud();
     };
@@ -508,14 +536,17 @@ export default function GameScreen({
               />
             </div>
           </div>
-          {!paused && !over && (
-            <button
-              onClick={togglePause}
-              className="absolute right-3 top-3 z-30 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-slate-200 backdrop-blur-md transition hover:bg-black/60"
-            >
-              ❚❚
-            </button>
-          )}
+          <div className="absolute right-3 top-3 z-30 flex items-center gap-2">
+            <FullscreenButton compact />
+            {!paused && !over && (
+              <button
+                onClick={togglePause}
+                className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-slate-200 backdrop-blur-md transition hover:bg-black/60"
+              >
+                ❚❚
+              </button>
+            )}
+          </div>
         </>
       )}
 
@@ -644,7 +675,7 @@ export default function GameScreen({
             label={youLabel}
             onAim={(a) => setAim(0, a)}
             onThrust={(v) => setThrust(0, v)}
-            headsUp={false}
+            headsUp={fieldRotated}
           />
         </div>
       )}
@@ -653,6 +684,15 @@ export default function GameScreen({
         <DualMenu
           headsUp={headsUp}
           p1={
+            <PauseCard
+              titleTrack={titleTrack}
+              dir={overlayDir}
+              onResume={togglePause}
+              onRestart={restart}
+              onExit={onExit}
+            />
+          }
+          p2={
             <PauseCard
               titleTrack={titleTrack}
               dir={overlayDir}
@@ -801,6 +841,7 @@ function PauseCard({
   onExit: () => void;
 }) {
   const { t } = useI18n();
+  const fullscreen = useFullscreen();
   return (
     <div dir={dir}>
       <h2
@@ -810,6 +851,19 @@ function PauseCard({
       </h2>
       <div className="mt-5 grid w-full gap-3">
         <NeonButton onClick={onResume}>▶ {t("resume")}</NeonButton>
+        {fullscreen.supported && (
+          <NeonButton
+            variant="soft"
+            onClick={() => {
+              audio.click();
+              void fullscreen.toggle();
+            }}
+          >
+            {fullscreen.active
+              ? t("exitFullScreen")
+              : `⛶ ${t("fullScreen")}`}
+          </NeonButton>
+        )}
         <NeonButton variant="soft" onClick={onRestart}>
           ↺ {t("restartMatch")}
         </NeonButton>
