@@ -152,6 +152,8 @@ export class Game {
   input: InputState = { p1: emptyPad(), p2: emptyPad() };
   onEvent?: (e: GameEvent) => void;
   aiSkill = 0.75;
+  /** Seconds the AI has been pinning a slow ball into a corner. */
+  private aiStuckT = 0;
 
   constructor(settings: Settings, mode: GameMode, targetScore: number) {
     this.settings = settings;
@@ -225,6 +227,7 @@ export class Game {
     this.ball.x = FIELD_W / 2;
     this.ball.y = FIELD_H / 2;
     this.ball.vx = this.ball.vy = 0;
+    this.aiStuckT = 0;
     this.ships[0].color = this.settings.p1Color;
     this.ships[1].color = this.settings.p2Color;
     this.ships[0].ai = false;
@@ -305,7 +308,7 @@ export class Game {
   // ------------------------------------------------------------------ ships
   private stepShips(dt: number) {
     for (const ship of this.ships) {
-      const pad = ship.ai ? this.aiPad(ship) : this.padFor(ship.id);
+      const pad = ship.ai ? this.aiPad(ship, dt) : this.padFor(ship.id);
 
       if (pad.aimStick != null) {
         ship.aim = pad.aimStick;
@@ -371,31 +374,79 @@ export class Game {
     return id === 0 ? this.input.p1 : this.input.p2;
   }
 
-  private aiPad(ship: Ship): PadInput {
+  /**
+   * Which field corner the ball is pocketed in, if any.
+   * x: -1 left / 1 right; y: -1 top / 1 bottom.
+   */
+  private ballCorner(): { x: number; y: number } | null {
+    const b = this.ball;
+    const z = b.r + 36;
+    const x = b.x < z ? -1 : b.x > FIELD_W - z ? 1 : 0;
+    const y = b.y < z ? -1 : b.y > FIELD_H - z ? 1 : 0;
+    if (!x || !y) return null;
+    return { x, y };
+  }
+
+  private aiPad(ship: Ship, dt: number): PadInput {
     const ball = this.ball;
     const attackDir = -1; // AI is always player 2 -> attacks the left goal
+    const contact = SHIP_R + BALL_R;
     const dToBall = Math.hypot(ball.x - ship.x, ball.y - ship.y);
+    const corner = this.ballCorner();
+    const ballSp = Math.hypot(ball.vx, ball.vy);
+
+    if (corner && dToBall < contact + 28 && ballSp < 110) {
+      this.aiStuckT += dt;
+    } else {
+      this.aiStuckT = Math.max(0, this.aiStuckT - dt * 2);
+    }
+
     let tx: number;
     let ty: number;
-    if (dToBall < SHIP_R + BALL_R + 32) {
+    let reverse = false;
+
+    if (corner) {
+      if (this.aiStuckT > 0.16) {
+        reverse = true;
+        tx = ball.x;
+        ty = ball.y;
+      } else {
+        // Nudge the aim off the exact corner diagonal so the strike
+        // has a glancing component; still close enough to make contact.
+        tx = ball.x - corner.x * 6;
+        ty = ball.y - corner.y * 20;
+      }
+    } else if (dToBall < contact + 32) {
       tx = ball.x;
       ty = ball.y;
     } else {
       const px = ball.x + ball.vx * 0.13;
       const py = ball.y + ball.vy * 0.13;
-      tx = px - attackDir * (SHIP_R + BALL_R + 4);
+      tx = px - attackDir * (contact + 4);
       ty = py + Math.sin(this.time * 1.6) * 14;
     }
-    let desired = Math.atan2(ty - ship.y, tx - ship.x);
-    desired += rand(-1, 1) * (1 - this.aiSkill) * 0.5;
+
+    let desired: number;
+    if (reverse) {
+      // Face the ball and reverse to create space, then re-approach.
+      desired = Math.atan2(ball.y - ship.y, ball.x - ship.x);
+    } else {
+      desired = Math.atan2(ty - ship.y, tx - ship.x);
+    }
+    if (reverse && this.settings.downDisabled) {
+      desired = norm(desired + Math.PI);
+      reverse = false;
+    }
+    if (!corner) desired += rand(-1, 1) * (1 - this.aiSkill) * 0.5;
     const diff = norm(desired - ship.aim);
-    const nearBall = dToBall < SHIP_R + BALL_R + 32;
+    const nearBall = dToBall < contact + 32;
     const dTarget = Math.hypot(tx - ship.x, ty - ship.y);
+    const aimed = Math.abs(diff) < 0.6;
     return {
       left: diff < -0.14,
       right: diff > 0.14,
-      up: Math.abs(diff) < 0.6 && (nearBall || dTarget > 36),
-      down: false,
+      up: !reverse && aimed && (nearBall || dTarget > 36 || !!corner),
+      down: reverse && Math.abs(diff) < 1.2,
       aimStick: null,
     };
   }
@@ -557,6 +608,20 @@ export class Game {
     b.vy += j * ny * invB;
 
     if (isShipBall) {
+      const pocket = this.ballCorner();
+      if (pocket) {
+        const into = b.vx * pocket.x + b.vy * pocket.y;
+        if (into > 0) {
+          const el2 = pocket.x * pocket.x + pocket.y * pocket.y;
+          b.vx -= (pocket.x * into) / el2;
+          b.vy -= (pocket.y * into) / el2;
+        }
+        const el = Math.hypot(pocket.x, pocket.y);
+        const pop = Math.max(160, Math.abs(j) * invB * 0.35);
+        b.vx -= (pocket.x / el) * pop;
+        b.vy -= (pocket.y / el) * pop;
+      }
+
       const intensity = clamp(j / 620, 0, 1);
       if (intensity > 0.05) {
         const px = a.x + nx * a.r;

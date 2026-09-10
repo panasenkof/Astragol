@@ -519,7 +519,7 @@ export default function GameScreen({
               </div>
               {headsUp && (
                 <div className="rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 text-center text-[10px] tracking-wide text-slate-300">
-                  Sit opposite · stick aims · hold THRUST
+                  Sit opposite · stick aims · hold boost
                 </div>
               )}
             </div>

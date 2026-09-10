@@ -10,6 +10,42 @@ export function screenAim(dx: number, dy: number, headsUp: boolean) {
   return headsUp ? Math.atan2(dx, -dy) : Math.atan2(dy, dx);
 }
 
+function BoostGlyph({ active, color }: { active: boolean; color: string }) {
+  return (
+    <svg
+      width="42"
+      height="42"
+      viewBox="0 0 42 42"
+      fill="none"
+      aria-hidden
+      style={{ display: "block" }}
+    >
+      <path
+        d="M21 4 L28 16 L21 13 L14 16 Z"
+        fill={color}
+        opacity={active ? 1 : 0.95}
+      />
+      <path
+        d="M21 13 L29 26 L21 22.5 L13 26 Z"
+        fill={color}
+        opacity={active ? 0.85 : 0.7}
+      />
+      <path
+        d="M21 22 L28 34 L21 30.5 L14 34 Z"
+        fill={color}
+        opacity={active ? 0.55 : 0.35}
+      />
+      <path
+        d="M18.5 33 Q21 40 23.5 33"
+        stroke={color}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity={active ? 0.9 : 0.45}
+      />
+    </svg>
+  );
+}
+
 export default function PlayerTouchControls({
   color,
   label,
@@ -166,7 +202,8 @@ export default function PlayerTouchControls({
 
       <button
         type="button"
-        className="flex shrink-0 flex-col items-center justify-center rounded-full border font-bold tracking-widest backdrop-blur-md"
+        aria-label="Boost"
+        className="flex shrink-0 items-center justify-center rounded-full border backdrop-blur-md"
         style={{
           width: 80,
           height: 80,
@@ -205,7 +242,7 @@ export default function PlayerTouchControls({
           onThrust(false);
         }}
       >
-        <span className="text-[10px]">THRUST</span>
+        <BoostGlyph active={thrusting} color={color} />
       </button>
     </div>
   );

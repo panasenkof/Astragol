@@ -133,7 +133,7 @@ export default function StartScreen({
                 <SectionTitle>On a phone</SectionTitle>
                 <ul className="space-y-1.5 text-sm text-slate-300">
                   <li>Two players sit opposite, phone between you</li>
-                  <li>Stick aims your ship · hold THRUST to fly</li>
+                  <li>Stick aims your ship · hold the boost button to fly</li>
                   <li>Your goal is the one behind you</li>
                 </ul>
               </div>
