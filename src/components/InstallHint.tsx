@@ -95,7 +95,7 @@ export default function InstallHint() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {deferred && (
+          {deferred && !ios && (
             <button
               type="button"
               onClick={() => void install()}
