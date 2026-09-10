@@ -75,7 +75,7 @@ export default function StartScreen({
               >
                 👥 2 Players&nbsp;&nbsp;
                 <span className="text-xs font-bold opacity-70">
-                  local co-op
+                  sit opposite
                 </span>
               </NeonButton>
               <div className="grid grid-cols-2 gap-3 pt-1">
@@ -130,43 +130,35 @@ export default function StartScreen({
           <Panel className="w-full max-w-2xl p-6">
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
-                <SectionTitle>Player 1 (Blue)</SectionTitle>
+                <SectionTitle>On a phone</SectionTitle>
                 <ul className="space-y-1.5 text-sm text-slate-300">
-                  <li>
-                    <Key>←</Key> <Key>→</Key> rotate your aim arrow
-                  </li>
-                  <li>
-                    <Key>↑</Key> thrust toward the arrow
-                  </li>
-                  <li>
-                    <Key>↓</Key> thrust opposite the arrow
-                  </li>
+                  <li>Two players sit opposite, phone between you</li>
+                  <li>Stick aims your ship · hold THRUST to fly</li>
+                  <li>Your goal is the one behind you</li>
                 </ul>
               </div>
               <div>
-                <SectionTitle>Player 2 (Red)</SectionTitle>
+                <SectionTitle>Keyboard</SectionTitle>
                 <ul className="space-y-1.5 text-sm text-slate-300">
                   <li>
-                    <Key>A</Key> <Key>D</Key> rotate your aim arrow
+                    P1 <Key>←</Key> <Key>→</Key> aim · <Key>↑</Key> thrust ·{" "}
+                    <Key>↓</Key> reverse
                   </li>
                   <li>
-                    <Key>W</Key> thrust toward the arrow
-                  </li>
-                  <li>
-                    <Key>S</Key> thrust opposite the arrow
+                    P2 <Key>A</Key> <Key>D</Key> aim · <Key>W</Key> thrust ·{" "}
+                    <Key>S</Key> reverse
                   </li>
                 </ul>
               </div>
             </div>
             <div className="mt-5 space-y-1.5 text-sm text-slate-400">
               <p>
-                Holding a thrust key builds up <b className="text-slate-200">charge</b> —
+                Holding thrust builds up <b className="text-slate-200">charge</b> —
                 the longer you hold, the harder you accelerate. New thrust adds to your
                 current velocity, so steer with momentum.
               </p>
               <p>
-                <Key>P</Key> or <Key>Esc</Key> pause · <Key>R</Key> restart ·{" "}
-                on touch devices use the two on-screen pads.
+                <Key>P</Key> or <Key>Esc</Key> pause · <Key>R</Key> restart
               </p>
             </div>
           </Panel>

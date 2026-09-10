@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Game, type GameEvent, type PadInput } from "@/game/engine";
+import { Game, emptyPad, type GameEvent, type Viewport } from "@/game/engine";
 import { audio } from "@/game/audio";
 import { addScore } from "@/game/storage";
 import { FIELD_H, FIELD_W, TARGET_SCORE } from "@/game/constants";
 import type { GameMode, Settings } from "@/game/types";
 import { NeonButton } from "./ui";
+import PlayerTouchControls, { TOUCH_STRIP_H } from "./PlayerTouchControls";
 
 interface Hud {
   s1: number;
@@ -27,6 +28,63 @@ function fmtTime(s: number) {
   const m = Math.floor(s / 60);
   const sec = Math.floor(s % 60);
   return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+function isCoarsePointer() {
+  return (
+    (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0) ||
+    (typeof window !== "undefined" && "ontouchstart" in window)
+  );
+}
+
+function computeView(
+  w: number,
+  h: number,
+  dpr: number,
+  headsUp: boolean,
+  touch: boolean
+): Viewport {
+  if (headsUp) {
+    const padTop = TOUCH_STRIP_H + 8;
+    const padBottom = TOUCH_STRIP_H + 8;
+    const availW = Math.max(1, w - 16);
+    const availH = Math.max(1, h - padTop - padBottom);
+    const scale = Math.max(
+      0.12,
+      Math.min(availW / FIELD_H, availH / FIELD_W)
+    );
+    const cx = w / 2;
+    const cy = padTop + availH / 2;
+    return {
+      scale,
+      ox: cx - (FIELD_W * scale) / 2,
+      oy: cy - (FIELD_H * scale) / 2,
+      cx,
+      cy,
+      rotate: -Math.PI / 2,
+      w,
+      h,
+      dpr,
+    };
+  }
+  const padTop = 84;
+  const padBottom = touch ? TOUCH_STRIP_H + 16 : 12;
+  const availW = w - 20;
+  const availH = h - padTop - padBottom;
+  const scale = Math.max(0.12, Math.min(availW / FIELD_W, availH / FIELD_H));
+  const ox = (w - FIELD_W * scale) / 2;
+  const oy = padTop + (availH - FIELD_H * scale) / 2;
+  return {
+    scale,
+    ox,
+    oy,
+    cx: ox + (FIELD_W * scale) / 2,
+    cy: oy + (FIELD_H * scale) / 2,
+    rotate: 0,
+    w,
+    h,
+    dpr,
+  };
 }
 
 export default function GameScreen({
@@ -56,13 +114,27 @@ export default function GameScreen({
   const [paused, setPaused] = useState(false);
   const [hud, setHud] = useState<Hud>(hudSnap.current);
   const [over, setOver] = useState<OverInfo | null>(null);
-  const [isTouch, setIsTouch] = useState(false);
+  const [isTouch, setIsTouch] = useState(() =>
+    typeof window !== "undefined" ? isCoarsePointer() : false
+  );
+  const [portrait, setPortrait] = useState(() =>
+    typeof window !== "undefined" ? window.innerHeight >= window.innerWidth : true
+  );
+  const [narrow, setNarrow] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 1100 : true
+  );
 
   settingsRef.current = settings;
 
   const overRef = useRef(false);
   overRef.current = over !== null;
   const overRefActive = () => overRef.current;
+
+  const headsUp = mode === "2p" && isTouch && narrow;
+  const headsUpRef = useRef(headsUp);
+  const touchRef = useRef(isTouch);
+  headsUpRef.current = headsUp;
+  touchRef.current = isTouch;
 
   const togglePause = () => {
     const g = gameRef.current;
@@ -71,8 +143,8 @@ export default function GameScreen({
     pausedRef.current = !pausedRef.current;
     setPaused(pausedRef.current);
     if (pausedRef.current) {
-      g.input.p1 = emptyPadLocal();
-      g.input.p2 = emptyPadLocal();
+      g.input.p1 = emptyPad();
+      g.input.p2 = emptyPad();
     }
   };
 
@@ -96,19 +168,56 @@ export default function GameScreen({
     setHud(hudSnap.current);
   };
 
-  const setTouch = (who: 0 | 1, k: keyof PadInput, v: boolean) => {
+  const setAim = (who: 0 | 1, aim: number | null) => {
     const g = gameRef.current;
     if (!g) return;
-    if (who === 0) g.input.p1[k] = v;
-    else g.input.p2[k] = v;
+    if (who === 0) g.input.p1.aimStick = aim;
+    else g.input.p2.aimStick = aim;
+  };
+
+  const setThrust = (who: 0 | 1, held: boolean) => {
+    const g = gameRef.current;
+    if (!g) return;
+    if (who === 0) g.input.p1.up = held;
+    else g.input.p2.up = held;
   };
 
   useEffect(() => {
-    setIsTouch(
-      typeof window !== "undefined" &&
-        ("ontouchstart" in window || navigator.maxTouchPoints > 0)
-    );
+    const sync = () => {
+      setIsTouch(isCoarsePointer());
+      setPortrait(window.innerHeight >= window.innerWidth);
+      setNarrow(window.innerWidth < 1100);
+    };
+    sync();
+    window.addEventListener("resize", sync);
+    window.addEventListener("orientationchange", sync);
+    return () => {
+      window.removeEventListener("resize", sync);
+      window.removeEventListener("orientationchange", sync);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!headsUp) return;
+    const orient = screen.orientation as
+      | { lock?: (o: string) => Promise<void>; unlock?: () => void }
+      | undefined;
+    void orient?.lock?.("portrait").catch(() => {});
+    let sentinel: { release: () => Promise<void> } | null = null;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (t: string) => Promise<{ release: () => Promise<void> }> };
+    };
+    nav.wakeLock
+      ?.request("screen")
+      .then((s) => {
+        sentinel = s;
+      })
+      .catch(() => {});
+    return () => {
+      orient?.unlock?.();
+      void sentinel?.release();
+    };
+  }, [headsUp]);
 
   // ---- main loop -----------------------------------------------------------
   useEffect(() => {
@@ -143,7 +252,14 @@ export default function GameScreen({
                 ? crypto.randomUUID()
                 : String(Date.now()),
             mode,
-            result: e.winner === 0 ? (mode === "1p" ? "YOU" : "P1") : (mode === "1p" ? "CPU" : "P2"),
+            result:
+              e.winner === 0
+                ? mode === "1p"
+                  ? "YOU"
+                  : "P1"
+                : mode === "1p"
+                  ? "CPU"
+                  : "P2",
             s1: game.scores[0],
             s2: game.scores[1],
             margin: Math.abs(game.scores[0] - game.scores[1]),
@@ -175,21 +291,6 @@ export default function GameScreen({
         canvas.height = ph;
       }
       return { w, h };
-    };
-
-    const computeView = (w: number, h: number) => {
-      const padTop = 84;
-      const padBottom =
-        "ontouchstart" in window || navigator.maxTouchPoints > 0 ? 142 : 12;
-      const availW = w - 20;
-      const availH = h - padTop - padBottom;
-      const scale = Math.max(
-        0.12,
-        Math.min(availW / FIELD_W, availH / FIELD_H)
-      );
-      const ox = (w - FIELD_W * scale) / 2;
-      const oy = padTop + (availH - FIELD_H * scale) / 2;
-      return { scale, ox, oy, w, h, dpr };
     };
 
     const FIXED = 1 / 120;
@@ -245,7 +346,10 @@ export default function GameScreen({
 
       const { w, h } = resize();
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      game.render(ctx, computeView(w, h));
+      game.render(
+        ctx,
+        computeView(w, h, dpr, headsUpRef.current, touchRef.current)
+      );
       syncHud();
     };
     raf = requestAnimationFrame(loop);
@@ -254,12 +358,10 @@ export default function GameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
-  // ---- push settings changes into the running game -------------------------
   useEffect(() => {
     gameRef.current?.applySettings(settings);
   }, [settings]);
 
-  // ---- keyboard ------------------------------------------------------------
   useEffect(() => {
     const gameKeys = new Set([
       "ArrowLeft",
@@ -356,6 +458,8 @@ export default function GameScreen({
 
   const p1 = settings.p1Color;
   const p2 = settings.p2Color;
+  const showRotate = headsUp && !portrait;
+  const touchActive = isTouch && !paused && !over;
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-[#04030d] select-none">
@@ -364,65 +468,75 @@ export default function GameScreen({
         className="absolute inset-0 h-full w-full touch-none"
       />
 
-      {/* ---- scoreboard ---- */}
-      <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2">
-        <div className="flex items-stretch gap-2 rounded-2xl border border-white/10 bg-black/40 p-2 backdrop-blur-md">
-          <TeamCard
-            name={mode === "1p" ? "YOU" : "P1"}
-            score={hud.s1}
-            color={p1}
-            target={TARGET_SCORE}
-            mirror={false}
-          />
-          <div className="flex flex-col items-center justify-center px-3">
-            <span className="text-[10px] font-bold tracking-[0.3em] text-slate-400">
-              VS
-            </span>
-            <span className="mt-0.5 font-mono text-xs text-cyan-200/80">
-              {fmtTime(hud.elapsed)}
-            </span>
+      {!headsUp && (
+        <>
+          <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2">
+            <div className="flex items-stretch gap-2 rounded-2xl border border-white/10 bg-black/40 p-2 backdrop-blur-md">
+              <TeamCard
+                name={mode === "1p" ? "YOU" : "P1"}
+                score={hud.s1}
+                color={p1}
+                target={TARGET_SCORE}
+                mirror={false}
+              />
+              <div className="flex flex-col items-center justify-center px-3">
+                <span className="text-[10px] font-bold tracking-[0.3em] text-slate-400">
+                  VS
+                </span>
+                <span className="mt-0.5 font-mono text-xs text-cyan-200/80">
+                  {fmtTime(hud.elapsed)}
+                </span>
+              </div>
+              <TeamCard
+                name={mode === "1p" ? "CPU" : "P2"}
+                score={hud.s2}
+                color={p2}
+                target={TARGET_SCORE}
+                mirror
+              />
+            </div>
           </div>
-          <TeamCard
-            name={mode === "1p" ? "CPU" : "P2"}
-            score={hud.s2}
-            color={p2}
-            target={TARGET_SCORE}
-            mirror
-          />
-        </div>
-      </div>
-
-      {/* pause button */}
-      {!paused && !over && (
-        <button
-          onClick={togglePause}
-          className="absolute right-3 top-3 z-30 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-slate-200 backdrop-blur-md transition hover:bg-black/60"
-        >
-          ❚❚
-        </button>
+          {!paused && !over && (
+            <button
+              onClick={togglePause}
+              className="absolute right-3 top-3 z-30 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-slate-200 backdrop-blur-md transition hover:bg-black/60"
+            >
+              ❚❚
+            </button>
+          )}
+        </>
       )}
 
-      {/* ---- countdown ---- */}
       {hud.phase === "countdown" && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-          <div
-            key={hud.count}
-            className="animate-[pop_0.5s_ease-out] text-[22vw] font-black leading-none text-white/90 drop-shadow-[0_0_40px_rgba(120,200,255,0.8)] sm:text-[140px]"
-          >
-            {hud.count === 0 ? "GO!" : hud.count}
-          </div>
-        </div>
+        <DualFace headsUp={headsUp}>
+          {(who) => (
+            <div className="flex flex-col items-center gap-2">
+              <div
+                key={`${who}-${hud.count}`}
+                className="text-[18vw] font-black leading-none text-white/90 drop-shadow-[0_0_40px_rgba(120,200,255,0.8)] sm:text-[120px]"
+              >
+                {hud.count === 0 ? "GO!" : hud.count}
+              </div>
+              {headsUp && (
+                <div className="rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 text-center text-[10px] tracking-wide text-slate-300">
+                  Sit opposite · stick aims · hold THRUST
+                </div>
+              )}
+            </div>
+          )}
+        </DualFace>
       )}
       {hud.go && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-          <div className="animate-[pop_0.6s_ease-out] text-[18vw] font-black text-cyan-200 drop-shadow-[0_0_40px_rgba(120,200,255,0.9)] sm:text-[120px]">
-            GO!
-          </div>
-        </div>
+        <DualFace headsUp={headsUp}>
+          {() => (
+            <div className="text-[16vw] font-black text-cyan-200 drop-shadow-[0_0_40px_rgba(120,200,255,0.9)] sm:text-[100px]">
+              GO!
+            </div>
+          )}
+        </DualFace>
       )}
 
-      {/* ---- control hint during the countdown ---- */}
-      {hud.phase === "countdown" && (
+      {hud.phase === "countdown" && !isTouch && (
         <div className="pointer-events-none absolute left-1/2 top-24 z-10 -translate-x-1/2 rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-center text-[11px] text-slate-300 backdrop-blur-md sm:text-xs">
           <div>
             <span className="font-bold" style={{ color: p1 }}>
@@ -442,112 +556,293 @@ export default function GameScreen({
           )}
         </div>
       )}
-
-      {/* ---- goal banner ---- */}
       {hud.phase === "scored" && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2">
-          <div
-            key={hud.s1 + "-" + hud.s2}
-            className="animate-[pop_0.45s_ease-out] text-[15vw] font-black italic tracking-wider sm:text-[104px]"
-            style={{
-              color: hud.scorer === 0 ? p1 : p2,
-              textShadow: `0 0 55px ${hud.scorer === 0 ? p1 : p2}`,
-            }}
-          >
-            GOAL!
-          </div>
-          <div className="text-sm font-bold tracking-[0.4em] text-white/70">
-            {hud.scorer === 0
-              ? mode === "1p"
-                ? "YOU SCORE"
-                : "PLAYER 1 SCORES"
-              : mode === "1p"
-                ? "CPU SCORES"
-                : "PLAYER 2 SCORES"}
-          </div>
-        </div>
+        <DualFace headsUp={headsUp}>
+          {(who) => (
+            <div className="flex flex-col items-center gap-1">
+              <div
+                key={`${who}-${hud.s1}-${hud.s2}`}
+                className="animate-[pop_0.45s_ease-out] text-[14vw] font-black italic tracking-wider sm:text-[96px]"
+                style={{
+                  color: hud.scorer === 0 ? p1 : p2,
+                  textShadow: `0 0 55px ${hud.scorer === 0 ? p1 : p2}`,
+                }}
+              >
+                GOAL!
+              </div>
+              <div className="text-xs font-bold tracking-[0.3em] text-white/70">
+                {goalCaption(mode, hud.scorer, who, headsUp)}
+              </div>
+            </div>
+          )}
+        </DualFace>
       )}
 
-      {/* ---- touch pads ---- */}
-      {isTouch && !paused && !over && (
+      {touchActive && headsUp && (
         <>
-          <TouchPad
-            color={p1}
-            side="left"
-            label={mode === "1p" ? "YOU" : "P1"}
-            downEnabled={!settings.downDisabled}
-            onSet={(k, v) => setTouch(0, k, v)}
-          />
-          {mode === "2p" && (
-            <TouchPad
-              color={p2}
-              side="right"
-              label="P2"
-              downEnabled={!settings.downDisabled}
-              onSet={(k, v) => setTouch(1, k, v)}
+          <div className="absolute inset-x-0 top-0 z-30 pt-[env(safe-area-inset-top)]">
+            <div className="rotate-180">
+              <PlayerTouchControls
+                color={p2}
+                label="P2"
+                myScore={hud.s2}
+                theirScore={hud.s1}
+                theirColor={p1}
+                elapsed={fmtTime(hud.elapsed)}
+                showHud
+                showPause
+                onPause={togglePause}
+                onAim={(a) => setAim(1, a)}
+                onThrust={(v) => setThrust(1, v)}
+                headsUp
+              />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)]">
+            <PlayerTouchControls
+              color={p1}
+              label="P1"
+              myScore={hud.s1}
+              theirScore={hud.s2}
+              theirColor={p2}
+              elapsed={fmtTime(hud.elapsed)}
+              showHud
+              showPause
+              onPause={togglePause}
+              onAim={(a) => setAim(0, a)}
+              onThrust={(v) => setThrust(0, v)}
+              headsUp
             />
-          )}
+          </div>
         </>
       )}
 
-      {/* ---- pause overlay ---- */}
-      {paused && (
-        <Overlay>
-          <h2 className="text-center text-4xl font-black tracking-[0.2em] text-cyan-100">
-            PAUSED
-          </h2>
-          <div className="mt-7 grid w-full gap-3">
-            <NeonButton onClick={togglePause}>▶ Resume</NeonButton>
-            <NeonButton variant="soft" onClick={restart}>
-              ↺ Restart match
-            </NeonButton>
-            <NeonButton variant="ghost" onClick={onExit}>
-              ⌂ Main menu
-            </NeonButton>
-          </div>
-        </Overlay>
+      {touchActive && !headsUp && (
+        <div className="absolute inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)]">
+          <PlayerTouchControls
+            color={p1}
+            label={mode === "1p" ? "YOU" : "P1"}
+            onAim={(a) => setAim(0, a)}
+            onThrust={(v) => setThrust(0, v)}
+            headsUp={false}
+          />
+        </div>
       )}
 
-      {/* ---- game over overlay ---- */}
+      {paused && (
+        <DualMenu
+          headsUp={headsUp}
+          p1={
+            <PauseCard
+              onResume={togglePause}
+              onRestart={restart}
+              onExit={onExit}
+            />
+          }
+        />
+      )}
+
       {over && (
-        <Overlay>
-          <p className="text-center text-xs font-bold tracking-[0.4em] text-slate-400">
-            MATCH OVER
+        <DualMenu
+          headsUp={headsUp}
+          p1={
+            <OverCard
+              winner={over.winner}
+              me={0}
+              headsUp={headsUp}
+              mode={mode}
+              s1={over.s1}
+              s2={over.s2}
+              seconds={over.seconds}
+              p1={p1}
+              p2={p2}
+              onRestart={restart}
+              onExit={onExit}
+            />
+          }
+          p2={
+            <OverCard
+              winner={over.winner}
+              me={1}
+              headsUp={headsUp}
+              mode={mode}
+              s1={over.s1}
+              s2={over.s2}
+              seconds={over.seconds}
+              p1={p1}
+              p2={p2}
+              onRestart={restart}
+              onExit={onExit}
+            />
+          }
+        />
+      )}
+
+      {showRotate && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 px-8 text-center">
+          <p className="max-w-sm text-lg font-bold tracking-wide text-cyan-100">
+            Turn the phone upright and sit opposite each other
           </p>
-          <h2
-            className="mt-2 text-center text-4xl font-black tracking-wide"
-            style={{ color: over.winner === 0 ? p1 : p2 }}
-          >
-            {over.winner === 0
-              ? mode === "1p"
-                ? "YOU WIN!"
-                : "PLAYER 1 WINS!"
-              : mode === "1p"
-                ? "CPU WINS"
-                : "PLAYER 2 WINS!"}
-          </h2>
-          <div className="mt-4 flex items-center justify-center gap-4 font-mono text-3xl">
-            <span style={{ color: p1 }}>{over.s1}</span>
-            <span className="text-slate-500">–</span>
-            <span style={{ color: p2 }}>{over.s2}</span>
-          </div>
-          <p className="mt-2 text-center text-sm text-slate-400">
-            Match time {fmtTime(over.seconds)}
-          </p>
-          <div className="mt-7 grid w-full gap-3">
-            <NeonButton onClick={restart}>↺ Play again</NeonButton>
-            <NeonButton variant="ghost" onClick={onExit}>
-              ⌂ Main menu
-            </NeonButton>
-          </div>
-        </Overlay>
+        </div>
       )}
     </div>
   );
 }
 
-function emptyPadLocal(): PadInput {
-  return { left: false, right: false, up: false, down: false };
+function goalCaption(
+  mode: GameMode,
+  scorer: 0 | 1,
+  who: 0 | 1,
+  headsUp: boolean
+) {
+  if (headsUp) return scorer === who ? "YOU SCORE" : "THEY SCORE";
+  if (scorer === 0) return mode === "1p" ? "YOU SCORE" : "PLAYER 1 SCORES";
+  return mode === "1p" ? "CPU SCORES" : "PLAYER 2 SCORES";
+}
+
+function DualFace({
+  headsUp,
+  children,
+}: {
+  headsUp: boolean;
+  children: (who: 0 | 1) => ReactNode;
+}) {
+  if (!headsUp) {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+        {children(0)}
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className="pointer-events-none absolute inset-x-0 top-[20%] z-20 flex justify-center rotate-180">
+        {children(1)}
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-[20%] z-20 flex justify-center">
+        {children(0)}
+      </div>
+    </>
+  );
+}
+
+function DualMenu({
+  headsUp,
+  p1,
+  p2,
+}: {
+  headsUp: boolean;
+  p1: ReactNode;
+  p2?: ReactNode;
+}) {
+  const card = (node: ReactNode) => (
+    <div className="w-[min(92vw,360px)] rounded-3xl border border-cyan-300/20 bg-[#0a0c22]/90 p-6 shadow-[0_0_60px_-10px_rgba(80,150,255,0.6)]">
+      {node}
+    </div>
+  );
+  if (!headsUp) {
+    return (
+      <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/55 backdrop-blur-sm">
+        {card(p1)}
+      </div>
+    );
+  }
+  return (
+    <div className="absolute inset-0 z-40 bg-black/55 backdrop-blur-sm">
+      <div className="absolute left-1/2 top-[max(0.75rem,env(safe-area-inset-top))] -translate-x-1/2 rotate-180">
+        {card(p2 ?? p1)}
+      </div>
+      <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2">
+        {card(p1)}
+      </div>
+    </div>
+  );
+}
+
+function PauseCard({
+  onResume,
+  onRestart,
+  onExit,
+}: {
+  onResume: () => void;
+  onRestart: () => void;
+  onExit: () => void;
+}) {
+  return (
+    <>
+      <h2 className="text-center text-3xl font-black tracking-[0.2em] text-cyan-100">
+        PAUSED
+      </h2>
+      <div className="mt-5 grid w-full gap-3">
+        <NeonButton onClick={onResume}>▶ Resume</NeonButton>
+        <NeonButton variant="soft" onClick={onRestart}>
+          ↺ Restart match
+        </NeonButton>
+        <NeonButton variant="ghost" onClick={onExit}>
+          ⌂ Main menu
+        </NeonButton>
+      </div>
+    </>
+  );
+}
+
+function OverCard({
+  winner,
+  me,
+  headsUp,
+  mode,
+  s1,
+  s2,
+  seconds,
+  p1,
+  p2,
+  onRestart,
+  onExit,
+}: {
+  winner: 0 | 1;
+  me: 0 | 1;
+  headsUp: boolean;
+  mode: GameMode;
+  s1: number;
+  s2: number;
+  seconds: number;
+  p1: string;
+  p2: string;
+  onRestart: () => void;
+  onExit: () => void;
+}) {
+  let title: string;
+  if (headsUp) title = winner === me ? "YOU WIN!" : "YOU LOSE";
+  else if (winner === 0) title = mode === "1p" ? "YOU WIN!" : "PLAYER 1 WINS!";
+  else title = mode === "1p" ? "CPU WINS" : "PLAYER 2 WINS!";
+  const titleColor = winner === 0 ? p1 : p2;
+  return (
+    <>
+      <p className="text-center text-xs font-bold tracking-[0.4em] text-slate-400">
+        MATCH OVER
+      </p>
+      <h2
+        className="mt-2 text-center text-3xl font-black tracking-wide"
+        style={{ color: titleColor }}
+      >
+        {title}
+      </h2>
+      <div className="mt-4 flex items-center justify-center gap-4 font-mono text-3xl">
+        <span style={{ color: p1 }}>{s1}</span>
+        <span className="text-slate-500">–</span>
+        <span style={{ color: p2 }}>{s2}</span>
+      </div>
+      <p className="mt-2 text-center text-sm text-slate-400">
+        Match time {fmtTime(seconds)}
+      </p>
+      <div className="mt-6 grid w-full gap-3">
+        <NeonButton onClick={onRestart}>↺ Play again</NeonButton>
+        <NeonButton variant="ghost" onClick={onExit}>
+          ⌂ Main menu
+        </NeonButton>
+      </div>
+    </>
+  );
 }
 
 function Kbd({ children }: { children: ReactNode }) {
@@ -555,16 +850,6 @@ function Kbd({ children }: { children: ReactNode }) {
     <kbd className="mx-0.5 inline-flex min-w-5 items-center justify-center rounded-md border border-cyan-300/25 bg-cyan-400/10 px-1 py-0.5 text-[10px] font-bold text-cyan-100">
       {children}
     </kbd>
-  );
-}
-
-function Overlay({ children }: { children: ReactNode }) {
-  return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/55 backdrop-blur-sm">
-      <div className="w-[min(90vw,380px)] rounded-3xl border border-cyan-300/20 bg-[#0a0c22]/85 p-7 shadow-[0_0_60px_-10px_rgba(80,150,255,0.6)]">
-        {children}
-      </div>
-    </div>
   );
 }
 
@@ -594,10 +879,7 @@ function TeamCard({
             style={{ background: color, boxShadow: `0 0 10px ${color}` }}
           />
         )}
-        <span
-          className="text-xs font-bold tracking-widest"
-          style={{ color }}
-        >
+        <span className="text-xs font-bold tracking-widest" style={{ color }}>
           {name}
         </span>
         {mirror && (
@@ -625,85 +907,6 @@ function TeamCard({
             }}
           />
         ))}
-      </div>
-    </div>
-  );
-}
-
-function TouchPad({
-  color,
-  side,
-  label,
-  downEnabled,
-  onSet,
-}: {
-  color: string;
-  side: "left" | "right";
-  label: string;
-  downEnabled: boolean;
-  onSet: (k: keyof PadInput, v: boolean) => void;
-}) {
-  const Btn = ({
-    k,
-    glyph,
-    disabled,
-  }: {
-    k: keyof PadInput;
-    glyph: string;
-    disabled?: boolean;
-  }) => (
-    <button
-      disabled={disabled}
-      onPointerDown={(e) => {
-        e.preventDefault();
-        try {
-          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-        } catch {
-          /* not supported — fine */
-        }
-        onSet(k, true);
-      }}
-      onPointerUp={() => onSet(k, false)}
-      onPointerCancel={() => onSet(k, false)}
-      onLostPointerCapture={() => onSet(k, false)}
-      className="flex items-center justify-center rounded-2xl border text-lg font-bold backdrop-blur-md transition active:scale-95 disabled:opacity-25"
-      style={{
-        color,
-        borderColor: `${color}55`,
-        background: "rgba(255,255,255,0.06)",
-        boxShadow: `inset 0 0 18px -6px ${color}`,
-      }}
-    >
-      {glyph}
-    </button>
-  );
-
-  return (
-    <div
-      className={`absolute bottom-4 z-30 flex flex-col items-center ${
-        side === "left" ? "left-4" : "right-4"
-      }`}
-      style={{ touchAction: "none" }}
-    >
-      <span
-        className="mb-1 text-[10px] font-bold tracking-widest"
-        style={{ color }}
-      >
-        {label}
-      </span>
-      <div
-        className="grid gap-1.5"
-        style={{
-          gridTemplateColumns: "repeat(3, 46px)",
-          gridTemplateRows: "repeat(2, 46px)",
-        }}
-      >
-        <Btn k="left" glyph="◀" />
-        <Btn k="up" glyph="▲" />
-        <Btn k="right" glyph="▶" />
-        <div />
-        <Btn k="down" glyph="▼" disabled={!downEnabled} />
-        <div />
       </div>
     </div>
   );

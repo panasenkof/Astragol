@@ -54,12 +54,15 @@ export interface PadInput {
   right: boolean;
   up: boolean;
   down: boolean;
+  /** Absolute heading in field radians; when set, overrides left/right. */
+  aimStick: number | null;
 }
 export const emptyPad = (): PadInput => ({
   left: false,
   right: false,
   up: false,
   down: false,
+  aimStick: null,
 });
 export interface InputState {
   p1: PadInput;
@@ -118,6 +121,9 @@ export interface Viewport {
   scale: number;
   ox: number;
   oy: number;
+  cx: number;
+  cy: number;
+  rotate: number;
   w: number;
   h: number;
   dpr: number;
@@ -301,8 +307,12 @@ export class Game {
     for (const ship of this.ships) {
       const pad = ship.ai ? this.aiPad(ship) : this.padFor(ship.id);
 
-      if (pad.left) ship.aim -= SHIP_ROT_SPEED * dt;
-      if (pad.right) ship.aim += SHIP_ROT_SPEED * dt;
+      if (pad.aimStick != null) {
+        ship.aim = pad.aimStick;
+      } else {
+        if (pad.left) ship.aim -= SHIP_ROT_SPEED * dt;
+        if (pad.right) ship.aim += SHIP_ROT_SPEED * dt;
+      }
       ship.aim = norm(ship.aim);
 
       const rate = dt / CHARGE_TIME;
@@ -386,6 +396,7 @@ export class Game {
       right: diff > 0.14,
       up: Math.abs(diff) < 0.6 && (nearBall || dTarget > 36),
       down: false,
+      aimStick: null,
     };
   }
 
@@ -666,15 +677,17 @@ export class Game {
 
   // --------------------------------------------------------------- render
   render(ctx: CanvasRenderingContext2D, view: Viewport) {
-    const { scale, ox, oy, w, h } = view;
+    const { scale, w, h } = view;
     this.drawBackground(ctx, view);
 
     const sx = this.shake ? rand(-this.shake, this.shake) : 0;
     const sy = this.shake ? rand(-this.shake, this.shake) : 0;
 
     ctx.save();
-    ctx.translate(ox + sx, oy + sy);
+    ctx.translate(view.cx + sx, view.cy + sy);
+    if (view.rotate) ctx.rotate(view.rotate);
     ctx.scale(scale, scale);
+    ctx.translate(-FIELD_W / 2, -FIELD_H / 2);
 
     this.drawArena(ctx);
     this.drawGoals(ctx);
