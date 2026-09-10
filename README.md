@@ -22,6 +22,11 @@ Then open the printed `Network` URL on your phone. That session is a website, no
 
 Repo Settings → Pages → Source: **GitHub Actions** (once).
 
+If the URL shows **404**, the first Pages deploy likely failed. Open
+[Actions → Deploy GitHub Pages](https://github.com/panasenkof/Astragol/actions)
+and run **Re-run failed jobs**, or merge a new commit to `main`. Wait a minute
+and refresh `https://panasenkof.github.io/Astragol/`.
+
 ## Scripts
 
 ```bash
