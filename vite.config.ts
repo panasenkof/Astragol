@@ -21,7 +21,7 @@ export default defineConfig({
       ? viteSingleFile()
       : VitePWA({
           registerType: "autoUpdate",
-          injectRegister: "auto",
+          injectRegister: false,
           includeAssets: [
             "favicon-32.png",
             "apple-touch-icon.png",
@@ -64,6 +64,8 @@ export default defineConfig({
           workbox: {
             globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
             navigateFallback: "index.html",
+            skipWaiting: true,
+            clientsClaim: true,
           },
         }),
   ],
