@@ -20,7 +20,6 @@ export interface Settings {
   shipWeight: number; // mass of each ship
   ballWeight: number; // mass of the ball
   restitution: number; // 0..1 collision elasticity
-  downDisabled: boolean; // "down arrow does nothing"
   p1Color: string;
   p2Color: string;
   aiDifficulty: AiDifficulty;
@@ -49,7 +48,6 @@ export const DEFAULT_SETTINGS: Settings = {
   shipWeight: 3.2,
   ballWeight: 1,
   restitution: 0.9,
-  downDisabled: false,
   p1Color: "#38bdf8",
   p2Color: "#fb5a4b",
   aiDifficulty: "normal",

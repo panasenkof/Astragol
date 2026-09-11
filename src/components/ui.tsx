@@ -1,6 +1,58 @@
 import { cn } from "@/utils/cn";
 import { localeUsesWideTracking, useI18n } from "@/i18n";
-import type { CSSProperties, ReactNode } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+
+/** Shrink a single-line label until it fits its container. */
+export function FitText({
+  children,
+  className,
+  minPx = 8,
+  maxPx = 14,
+}: {
+  children: string;
+  className?: string;
+  minPx?: number;
+  maxPx?: number;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const fit = () => {
+      el.style.fontSize = `${maxPx}px`;
+      let size = maxPx;
+      while (size > minPx && el.scrollWidth > el.clientWidth + 0.5) {
+        size -= 0.25;
+        el.style.fontSize = `${size}px`;
+      }
+    };
+
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
+    return () => ro.disconnect();
+  }, [children, minPx, maxPx]);
+
+  return (
+    <span
+      ref={ref}
+      className={cn(
+        "choice-label",
+        className
+      )}
+    >
+      {children}
+    </span>
+  );
+}
 
 export function Panel({
   children,
@@ -41,7 +93,7 @@ export function NeonButton({
   glow?: string;
 }) {
   const base =
-    "relative select-none rounded-2xl px-5 py-3 font-semibold tracking-wide transition-all duration-150 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100";
+    "relative min-w-0 select-none rounded-2xl px-3 py-3 text-center font-semibold leading-snug tracking-normal transition-all duration-150 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100 sm:px-5";
   const styles: Record<BtnVariant, string> = {
     primary:
       "text-[#04101f] bg-gradient-to-b from-cyan-300 to-sky-500 shadow-[0_0_28px_-4px_rgba(56,189,248,0.9)] hover:from-cyan-200 hover:to-sky-400",
@@ -133,7 +185,9 @@ export function Toggle({
       onClick={() => onChange(!checked)}
       className="flex w-full items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left transition hover:bg-white/[0.08]"
     >
-      <span className="text-sm text-slate-200">{label}</span>
+      <span className="min-w-0 text-sm leading-snug text-slate-200">
+        {label}
+      </span>
       <span
         className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
         style={{

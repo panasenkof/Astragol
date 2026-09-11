@@ -27,6 +27,32 @@ If the URL shows **404**, the first Pages deploy likely failed. Open
 and run **Re-run failed jobs**, or merge a new commit to `main`. Wait a minute
 and refresh `https://panasenkof.github.io/Astragol/`.
 
+## Updating the installed PWA
+
+GitHub Pages only publishes from `main`. A green deploy on a pull request does
+**not** update https://panasenkof.github.io/Astragol/ until that PR is merged.
+
+The installed app is served by a service worker cache, so a successful Pages
+deploy does not appear until the worker picks up the new `sw.js` and the page
+reloads. After a merge to `main`:
+
+1. Wait about a minute for Pages.
+2. Fully quit the app (on iPhone: swipe it away in the app switcher; on
+   Android: close the PWA / all site tabs).
+3. Open it again. The new worker should activate and reload on the menu
+   (not in the middle of a match).
+
+If it is still the old UI, force the first new worker once:
+
+- **Safari / iPhone:** open the site **in Safari** (not the Home Screen icon),
+  pull to refresh, then reopen from Home Screen.
+- **Chrome / Android:** site settings → **Clear & reset**, or Chrome →
+  Application/Site settings → Service workers → Unregister, then reopen.
+- **Desktop:** hard refresh (`Ctrl`/`⌘` + `Shift` + `R`).
+
+`npm run dev` has no service worker. Use `npm run build && npm run preview`
+to test the installed-app update path locally.
+
 ## Scripts
 
 ```bash

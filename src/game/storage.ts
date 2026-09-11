@@ -11,7 +11,10 @@ export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_SETTINGS);
     if (!raw) return { ...DEFAULT_SETTINGS };
-    const parsed = JSON.parse(raw) as Partial<Settings>;
+    const parsed = JSON.parse(raw) as Partial<Settings> & {
+      downDisabled?: unknown;
+    };
+    delete parsed.downDisabled;
     const merged = { ...DEFAULT_SETTINGS, ...parsed };
     if (!isAiDifficulty(merged.aiDifficulty)) {
       merged.aiDifficulty = DEFAULT_SETTINGS.aiDifficulty;

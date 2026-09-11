@@ -4,7 +4,7 @@ import {
   mapLanguageTag,
   resolveLocale,
 } from "./locales";
-import { interpolate } from "./messages";
+import { interpolate, translations } from "./messages";
 
 const cases: [string, ReturnType<typeof mapLanguageTag>][] = [
   ["en-US", "en"],
@@ -44,6 +44,15 @@ if (!isLocaleSetting("auto") || !isLocaleSetting("ru") || isLocaleSetting("de"))
 }
 if (interpolate("vs CPU · {difficulty}", { difficulty: "Hard" }) !== "vs CPU · Hard") {
   throw new Error("interpolate failed");
+}
+
+const removedKeys = ["disableDown", "disableDownHint", "controls"];
+for (const dict of Object.values(translations)) {
+  for (const key of removedKeys) {
+    if (key in dict) {
+      throw new Error(`removed i18n key still present: ${key}`);
+    }
+  }
 }
 
 console.log("i18n locale checks passed");

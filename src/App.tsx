@@ -13,6 +13,7 @@ import {
   type Settings,
 } from "@/game/types";
 import { I18nProvider, resolveLocale } from "@/i18n";
+import { flushPwaReload } from "@/pwa";
 
 type Screen = "start" | "settings" | "game";
 
@@ -89,6 +90,11 @@ export default function App() {
   }, [settings.musicMuted]);
 
   const locale = resolveLocale(settings.locale);
+
+  useEffect(() => {
+    document.documentElement.dataset.pwaLock = screen === "game" ? "1" : "";
+    if (screen !== "game") flushPwaReload();
+  }, [screen]);
 
   return (
     <I18nProvider locale={locale}>

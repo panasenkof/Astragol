@@ -804,7 +804,7 @@ function DualMenu({
   p2?: ReactNode;
 }) {
   const card = (node: ReactNode) => (
-    <div className="w-[min(92vw,360px)] rounded-3xl border border-cyan-300/20 bg-[#0a0c22]/90 p-6 shadow-[0_0_60px_-10px_rgba(80,150,255,0.6)]">
+    <div className="w-[min(92vw,360px)] rounded-3xl border border-cyan-300/20 bg-[#0a0c22]/90 p-4 shadow-[0_0_60px_-10px_rgba(80,150,255,0.6)] sm:p-6">
       {node}
     </div>
   );
@@ -850,10 +850,13 @@ function PauseCard({
         {t("paused")}
       </h2>
       <div className="mt-5 grid w-full gap-3">
-        <NeonButton onClick={onResume}>▶ {t("resume")}</NeonButton>
+        <NeonButton className="w-full" onClick={onResume}>
+          ▶ {t("resume")}
+        </NeonButton>
         {fullscreen.supported && (
           <NeonButton
             variant="soft"
+            className="w-full"
             onClick={() => {
               audio.click();
               void fullscreen.toggle();
@@ -864,10 +867,10 @@ function PauseCard({
               : `⛶ ${t("fullScreen")}`}
           </NeonButton>
         )}
-        <NeonButton variant="soft" onClick={onRestart}>
+        <NeonButton variant="soft" className="w-full" onClick={onRestart}>
           ↺ {t("restartMatch")}
         </NeonButton>
-        <NeonButton variant="ghost" onClick={onExit}>
+        <NeonButton variant="ghost" className="w-full" onClick={onExit}>
           ⌂ {t("mainMenu")}
         </NeonButton>
       </div>
@@ -928,8 +931,10 @@ function OverCard({
         {t("matchTime", { time: fmtTime(seconds) })}
       </p>
       <div className="mt-6 grid w-full gap-3">
-        <NeonButton onClick={onRestart}>↺ {t("playAgain")}</NeonButton>
-        <NeonButton variant="ghost" onClick={onExit}>
+        <NeonButton className="w-full" onClick={onRestart}>
+          ↺ {t("playAgain")}
+        </NeonButton>
+        <NeonButton variant="ghost" className="w-full" onClick={onExit}>
           ⌂ {t("mainMenu")}
         </NeonButton>
       </div>
@@ -971,7 +976,7 @@ function TeamCard({
             style={{ background: color, boxShadow: `0 0 10px ${color}` }}
           />
         )}
-        <span className="text-xs font-bold tracking-widest" style={{ color }}>
+        <span className="max-w-full text-xs font-bold leading-tight tracking-normal" style={{ color }}>
           {name}
         </span>
         {mirror && (
