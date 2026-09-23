@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/i18n";
+import { cn } from "@/utils/cn";
 import type { TouchScheme } from "@/game/types";
 
 /** Height reserved for a touch control strip (excluding safe-area). */
-export const TOUCH_STRIP_H = 124;
+export const TOUCH_STRIP_H = 152;
 
 const DEADZONE = 0.15;
 
@@ -60,6 +61,7 @@ function StripHud({
   elapsed,
   showPause,
   onPause,
+  compact = false,
 }: {
   color: string;
   label: string;
@@ -69,7 +71,42 @@ function StripHud({
   elapsed?: string;
   showPause?: boolean;
   onPause?: () => void;
+  compact?: boolean;
 }) {
+  const pause = showPause && onPause && (
+    <button
+      type="button"
+      onClick={onPause}
+      className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-[10px] text-slate-200"
+    >
+      ❚❚
+    </button>
+  );
+
+  if (compact) {
+    return (
+      <div className="flex min-w-0 items-center justify-center gap-1.5">
+        <span
+          className="text-[10px] font-bold tracking-widest"
+          style={{ color }}
+        >
+          {label}
+        </span>
+        {pause}
+        <span className="font-mono text-sm font-black" style={{ color }}>
+          {myScore ?? 0}
+        </span>
+        <span className="text-[10px] text-slate-500">–</span>
+        <span className="font-mono text-sm font-bold" style={{ color: theirColor }}>
+          {theirScore ?? 0}
+        </span>
+        {elapsed != null && (
+          <span className="font-mono text-[10px] text-cyan-200/70">{elapsed}</span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5">
       <div className="flex items-center gap-2">
@@ -79,15 +116,7 @@ function StripHud({
         >
           {label}
         </span>
-        {showPause && onPause && (
-          <button
-            type="button"
-            onClick={onPause}
-            className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-[10px] text-slate-200"
-          >
-            ❚❚
-          </button>
-        )}
+        {pause}
       </div>
       <div className="flex items-baseline gap-2 font-mono">
         <span className="text-2xl font-black leading-none" style={{ color }}>
@@ -110,19 +139,12 @@ function StripHud({
   );
 }
 
-const DIR_CELL: Record<TouchDir, string> = {
-  up: "col-start-2 row-start-1",
-  left: "col-start-1 row-start-2",
-  down: "col-start-2 row-start-2",
-  right: "col-start-3 row-start-2",
-};
-
-function Chevron({ dir }: { dir: TouchDir }) {
+function Chevron({ dir, size = 28 }: { dir: TouchDir; size?: number }) {
   const rot = { up: 0, right: 90, down: 180, left: 270 }[dir];
   return (
     <svg
-      width="22"
-      height="22"
+      width={size}
+      height={size}
       viewBox="0 0 22 22"
       aria-hidden
       style={{ display: "block", transform: `rotate(${rot}deg)` }}
@@ -137,11 +159,13 @@ function DirButton({
   color,
   label,
   onHold,
+  className,
 }: {
   dir: TouchDir;
   color: string;
   label: string;
   onHold: (held: boolean) => void;
+  className?: string;
 }) {
   const ptr = useRef<number | null>(null);
   const onHoldRef = useRef(onHold);
@@ -170,13 +194,18 @@ function DirButton({
       type="button"
       aria-label={label}
       aria-pressed={active}
-      className={`${DIR_CELL[dir]} flex items-center justify-center rounded-2xl border touch-none`}
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-[28px] border touch-none",
+        className
+      )}
       style={{
         color,
         borderColor: active ? color : `${color}66`,
         background: active ? `${color}3d` : "rgba(0,0,0,0.28)",
-        boxShadow: active ? `0 0 16px -2px ${color}` : "none",
-        transform: active ? "scale(0.94)" : "none",
+        boxShadow: active
+          ? `0 0 18px -1px ${color}`
+          : `inset 0 0 18px -8px ${color}`,
+        transform: active ? "scale(0.96)" : "none",
       }}
       onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => {
@@ -203,9 +232,11 @@ function DirButton({
 function ArrowPad({
   color,
   onDirection,
+  hud,
 }: {
   color: string;
   onDirection: (dir: TouchDir, held: boolean) => void;
+  hud?: ReactNode;
 }) {
   const { t } = useI18n();
   const heldRef = useRef<Record<TouchDir, boolean>>({
@@ -237,24 +268,44 @@ function ArrowPad({
     right: t("turnRight"),
   };
 
+  const sideBtn = "h-[96px] w-[92px]";
+  const midBtn = hud
+    ? "h-[50px] w-[100px] rounded-2xl"
+    : "h-[62px] w-[100px] rounded-2xl";
+
   return (
-    <div
-      className="grid h-[108px] w-[168px] shrink-0 grid-cols-3 grid-rows-2 gap-1 rounded-[28px] border p-1 backdrop-blur-md"
-      style={{
-        borderColor: `${color}66`,
-        background: "rgba(0,0,0,0.35)",
-        boxShadow: `inset 0 0 22px -8px ${color}`,
-      }}
-    >
-      {(Object.keys(DIR_CELL) as TouchDir[]).map((dir) => (
+    <div className="flex w-full items-center justify-between gap-2">
+      <DirButton
+        dir="left"
+        color={color}
+        label={labels.left}
+        className={sideBtn}
+        onHold={(held) => setDir("left", held)}
+      />
+      <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1">
+        {hud}
         <DirButton
-          key={dir}
-          dir={dir}
+          dir="up"
           color={color}
-          label={labels[dir]}
-          onHold={(held) => setDir(dir, held)}
+          label={labels.up}
+          className={midBtn}
+          onHold={(held) => setDir("up", held)}
         />
-      ))}
+        <DirButton
+          dir="down"
+          color={color}
+          label={labels.down}
+          className={midBtn}
+          onHold={(held) => setDir("down", held)}
+        />
+      </div>
+      <DirButton
+        dir="right"
+        color={color}
+        label={labels.right}
+        className={sideBtn}
+        onHold={(held) => setDir("right", held)}
+      />
     </div>
   );
 }
@@ -476,25 +527,29 @@ function ArrowTouchControls({
 }: TouchControlProps) {
   return (
     <div
-      className="flex w-full items-center gap-2 px-3 py-2"
+      className="flex w-full items-center px-2 py-1.5"
       data-scheme="arrows"
       style={{ touchAction: "none", minHeight: TOUCH_STRIP_H }}
     >
-      {showHud ? (
-        <StripHud
-          color={color}
-          label={label}
-          myScore={myScore}
-          theirScore={theirScore}
-          theirColor={theirColor}
-          elapsed={elapsed}
-          showPause={showPause}
-          onPause={onPause}
-        />
-      ) : (
-        <div className="min-w-0 flex-1" />
-      )}
-      <ArrowPad color={color} onDirection={onDirection} />
+      <ArrowPad
+        color={color}
+        onDirection={onDirection}
+        hud={
+          showHud ? (
+            <StripHud
+              compact
+              color={color}
+              label={label}
+              myScore={myScore}
+              theirScore={theirScore}
+              theirColor={theirColor}
+              elapsed={elapsed}
+              showPause={showPause}
+              onPause={onPause}
+            />
+          ) : undefined
+        }
+      />
     </div>
   );
 }
