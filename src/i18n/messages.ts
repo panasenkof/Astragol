@@ -101,6 +101,21 @@ export const en = {
   androidHint: "Install Nebula Arena to open it from your home screen.",
   browserHint: "Use your browser menu → Add to Home Screen / Install app.",
   install: "Install",
+
+  touchControls: "Touch controls",
+  touchControlsHint:
+    "Each player can use a joystick and boost, or four buttons laid out like the arrow keys.",
+  touchP1: "Player 1",
+  touchP2: "Player 2",
+  controlStick: "Joystick",
+  controlArrows: "Arrows",
+  controlStickBlurb: "Stick aims the ship. Hold boost to fly forward.",
+  controlArrowsBlurb:
+    "← → turn the aim. ↑ thrusts and ↓ reverses, same as the keyboard.",
+  turnLeft: "Turn left",
+  turnRight: "Turn right",
+  headsUpHintArrows: "Sit opposite · ← → turn · hold ↑ to fly",
+  helpPhone4: "Either player can switch to four arrow buttons in Settings.",
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -206,6 +221,19 @@ export const zh: Messages = {
   androidHint: "安装 Nebula Arena，从主屏幕直接打开。",
   browserHint: "使用浏览器菜单 → 添加到主屏幕 / 安装应用。",
   install: "安装",
+
+  touchControls: "触控",
+  touchControlsHint: "每位玩家可选摇杆加速，或四个按钮，布局与键盘方向键相同。",
+  touchP1: "玩家 1",
+  touchP2: "玩家 2",
+  controlStick: "摇杆",
+  controlArrows: "方向键",
+  controlStickBlurb: "摇杆瞄准飞船。按住加速向前飞。",
+  controlArrowsBlurb: "← → 转动瞄准。↑ 推进，↓ 倒飞，与键盘方向键相同。",
+  turnLeft: "左转",
+  turnRight: "右转",
+  headsUpHintArrows: "相对而坐 · ← → 转向 · 按住 ↑ 飞行",
+  helpPhone4: "任一玩家都可在设置中改用四个方向键。",
 };
 
 export const hi: Messages = {
@@ -311,6 +339,21 @@ export const hi: Messages = {
   androidHint: "होम स्क्रीन से खोलने के लिए Nebula Arena इंस्टॉल करें।",
   browserHint: "ब्राउज़र मेनू → होम स्क्रीन पर जोड़ें / ऐप इंस्टॉल करें।",
   install: "इंस्टॉल",
+
+  touchControls: "स्पर्श नियंत्रण",
+  touchControlsHint:
+    "हर खिलाड़ी स्टिक और बूस्ट चुन सकता है, या कीबोर्ड के तीरों जैसे चार बटन।",
+  touchP1: "खिलाड़ी 1",
+  touchP2: "खिलाड़ी 2",
+  controlStick: "स्टिक",
+  controlArrows: "तीर",
+  controlStickBlurb: "स्टिक जहाज़ का निशाना करती है। आगे उड़ने के लिए बूस्ट दबाए रखें।",
+  controlArrowsBlurb:
+    "← → निशाना घुमाते हैं। ↑ थ्रस्ट और ↓ उल्टा — कीबोर्ड के तीरों जैसा।",
+  turnLeft: "बाएँ मुड़ें",
+  turnRight: "दाएँ मुड़ें",
+  headsUpHintArrows: "सामने बैठें · ← → मोड़ · उड़ने के लिए ↑ दबाए रखें",
+  helpPhone4: "सेटिंग्स में कोई भी खिलाड़ी चार तीर बटन चुन सकता है।",
 };
 
 export const es: Messages = {
@@ -417,6 +460,21 @@ export const es: Messages = {
   browserHint:
     "Usa el menú del navegador → Añadir a pantalla de inicio / Instalar app.",
   install: "Instalar",
+
+  touchControls: "Controles táctiles",
+  touchControlsHint:
+    "Cada jugador puede usar palanca y boost, o cuatro botones como las flechas del teclado.",
+  touchP1: "Jugador 1",
+  touchP2: "Jugador 2",
+  controlStick: "Palanca",
+  controlArrows: "Flechas",
+  controlStickBlurb: "La palanca apunta la nave. Mantén el boost para volar hacia delante.",
+  controlArrowsBlurb:
+    "← → giran la mira. ↑ impulsa y ↓ retrocede, igual que el teclado.",
+  turnLeft: "Girar a la izquierda",
+  turnRight: "Girar a la derecha",
+  headsUpHintArrows: "Frente a frente · ← → girar · mantén ↑ para volar",
+  helpPhone4: "Cualquier jugador puede pasar a cuatro flechas en Ajustes.",
 };
 
 export const fr: Messages = {
@@ -523,6 +581,21 @@ export const fr: Messages = {
   browserHint:
     "Menu du navigateur → Ajouter à l’écran d’accueil / Installer l’app.",
   install: "Installer",
+
+  touchControls: "Commandes tactiles",
+  touchControlsHint:
+    "Chaque joueur peut utiliser un joystick et le boost, ou quatre boutons comme les flèches du clavier.",
+  touchP1: "Joueur 1",
+  touchP2: "Joueur 2",
+  controlStick: "Joystick",
+  controlArrows: "Flèches",
+  controlStickBlurb: "Le joystick vise le vaisseau. Maintenez le boost pour avancer.",
+  controlArrowsBlurb:
+    "← → tournent la visée. ↑ pousse et ↓ recule, comme le clavier.",
+  turnLeft: "Tourner à gauche",
+  turnRight: "Tourner à droite",
+  headsUpHintArrows: "Face à face · ← → tourner · maintenez ↑ pour voler",
+  helpPhone4: "Chaque joueur peut passer à quatre flèches dans les réglages.",
 };
 
 export const ar: Messages = {
@@ -628,6 +701,21 @@ export const ar: Messages = {
   androidHint: "ثبّت Nebula Arena لفتحه من الشاشة الرئيسية.",
   browserHint: "من قائمة المتصفح ← إضافة إلى الشاشة الرئيسية / تثبيت التطبيق.",
   install: "تثبيت",
+
+  touchControls: "التحكم باللمس",
+  touchControlsHint:
+    "كل لاعب يختار عصا وتسارعاً، أو أربعة أزرار بتخطيط أسهم لوحة المفاتيح.",
+  touchP1: "اللاعب 1",
+  touchP2: "اللاعب 2",
+  controlStick: "عصا",
+  controlArrows: "أسهم",
+  controlStickBlurb: "العصا توجّه السفينة. اضغط التسارع للطيران إلى الأمام.",
+  controlArrowsBlurb:
+    "← → تدوير التصويب. ↑ دفع و↓ رجوع، مثل أسهم لوحة المفاتيح.",
+  turnLeft: "انعطف يساراً",
+  turnRight: "انعطف يميناً",
+  headsUpHintArrows: "اجلسوا متقابلين · ← → تدوير · اضغط ↑ للطيران",
+  helpPhone4: "يمكن لأي لاعب التبديل إلى أربعة أسهم من الإعدادات.",
 };
 
 export const ru: Messages = {
@@ -734,6 +822,22 @@ export const ru: Messages = {
   browserHint:
     "Меню браузера → На экран «Домой» / Установить приложение.",
   install: "Установить",
+
+  touchControls: "Сенсорное управление",
+  touchControlsHint:
+    "Каждый игрок может выбрать джойстик с газом или четыре кнопки, как стрелки на клавиатуре.",
+  touchP1: "Игрок 1",
+  touchP2: "Игрок 2",
+  controlStick: "Джойстик",
+  controlArrows: "Стрелки",
+  controlStickBlurb: "Стик целится кораблём. Удерживайте газ, чтобы лететь вперёд.",
+  controlArrowsBlurb:
+    "← → поворачивают прицел. ↑ — газ, ↓ — назад, как стрелки клавиатуры.",
+  turnLeft: "Поворот влево",
+  turnRight: "Поворот вправо",
+  headsUpHintArrows: "Напротив · ← → поворот · удерживайте ↑",
+  helpPhone4:
+    "В настройках любой игрок может перейти на четыре стрелки вместо джойстика и газа.",
 };
 
 export const AI_LABEL_KEYS = {
@@ -746,6 +850,16 @@ export const AI_BLURB_KEYS = {
   easy: "aiEasyBlurb",
   normal: "aiNormalBlurb",
   hard: "aiHardBlurb",
+} as const satisfies Record<string, MessageKey>;
+
+export const TOUCH_LABEL_KEYS = {
+  stick: "controlStick",
+  arrows: "controlArrows",
+} as const satisfies Record<string, MessageKey>;
+
+export const TOUCH_BLURB_KEYS = {
+  stick: "controlStickBlurb",
+  arrows: "controlArrowsBlurb",
 } as const satisfies Record<string, MessageKey>;
 
 export const translations: Record<import("./locales").Locale, Messages> = {

@@ -164,6 +164,7 @@ export default function StartScreen({
                   <li>{t("helpPhone1")}</li>
                   <li>{t("helpPhone2")}</li>
                   <li>{t("helpPhone3")}</li>
+                  <li>{t("helpPhone4")}</li>
                 </ul>
               </div>
               <div>

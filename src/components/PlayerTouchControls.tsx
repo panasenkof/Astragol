@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/i18n";
+import type { TouchScheme } from "@/game/types";
 
 /** Height reserved for a touch control strip (excluding safe-area). */
 export const TOUCH_STRIP_H = 124;
@@ -11,6 +12,8 @@ export function screenAim(dx: number, dy: number, rotated: boolean) {
   // Rotated portrait: screen-up is field +x (toward the far / CPU goal).
   return rotated ? Math.atan2(dx, -dy) : Math.atan2(dy, dx);
 }
+
+export type TouchDir = "up" | "down" | "left" | "right";
 
 function BoostGlyph({ active, color }: { active: boolean; color: string }) {
   return (
@@ -48,7 +51,232 @@ function BoostGlyph({ active, color }: { active: boolean; color: string }) {
   );
 }
 
-export default function PlayerTouchControls({
+function StripHud({
+  color,
+  label,
+  myScore,
+  theirScore,
+  theirColor,
+  elapsed,
+  showPause,
+  onPause,
+}: {
+  color: string;
+  label: string;
+  myScore?: number;
+  theirScore?: number;
+  theirColor?: string;
+  elapsed?: string;
+  showPause?: boolean;
+  onPause?: () => void;
+}) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5">
+      <div className="flex items-center gap-2">
+        <span
+          className="text-[10px] font-bold tracking-widest"
+          style={{ color }}
+        >
+          {label}
+        </span>
+        {showPause && onPause && (
+          <button
+            type="button"
+            onClick={onPause}
+            className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-[10px] text-slate-200"
+          >
+            ❚❚
+          </button>
+        )}
+      </div>
+      <div className="flex items-baseline gap-2 font-mono">
+        <span className="text-2xl font-black leading-none" style={{ color }}>
+          {myScore ?? 0}
+        </span>
+        <span className="text-xs text-slate-500">–</span>
+        <span
+          className="text-lg font-bold leading-none"
+          style={{ color: theirColor }}
+        >
+          {theirScore ?? 0}
+        </span>
+      </div>
+      {elapsed != null && (
+        <span className="font-mono text-[10px] text-cyan-200/70">
+          {elapsed}
+        </span>
+      )}
+    </div>
+  );
+}
+
+const DIR_CELL: Record<TouchDir, string> = {
+  up: "col-start-2 row-start-1",
+  left: "col-start-1 row-start-2",
+  down: "col-start-2 row-start-2",
+  right: "col-start-3 row-start-2",
+};
+
+function Chevron({ dir }: { dir: TouchDir }) {
+  const rot = { up: 0, right: 90, down: 180, left: 270 }[dir];
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 22 22"
+      aria-hidden
+      style={{ display: "block", transform: `rotate(${rot}deg)` }}
+    >
+      <path d="M11 3.2 L18.2 15.2 H13.2 V18.8 H8.8 V15.2 H3.8 Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function DirButton({
+  dir,
+  color,
+  label,
+  onHold,
+}: {
+  dir: TouchDir;
+  color: string;
+  label: string;
+  onHold: (held: boolean) => void;
+}) {
+  const ptr = useRef<number | null>(null);
+  const onHoldRef = useRef(onHold);
+  onHoldRef.current = onHold;
+  const [active, setActive] = useState(false);
+
+  const hold = (next: boolean) => {
+    setActive(next);
+    onHoldRef.current(next);
+  };
+
+  const release = (id: number) => {
+    if (ptr.current !== id) return;
+    ptr.current = null;
+    hold(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (ptr.current != null) onHoldRef.current(false);
+    };
+  }, []);
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={active}
+      className={`${DIR_CELL[dir]} flex items-center justify-center rounded-2xl border touch-none`}
+      style={{
+        color,
+        borderColor: active ? color : `${color}66`,
+        background: active ? `${color}3d` : "rgba(0,0,0,0.28)",
+        boxShadow: active ? `0 0 16px -2px ${color}` : "none",
+        transform: active ? "scale(0.94)" : "none",
+      }}
+      onContextMenu={(e) => e.preventDefault()}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        ptr.current = e.pointerId;
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          /* not supported */
+        }
+        hold(true);
+      }}
+      onPointerUp={(e) => release(e.pointerId)}
+      onPointerCancel={(e) => release(e.pointerId)}
+      onLostPointerCapture={(e) => release(e.pointerId)}
+    >
+      <Chevron dir={dir} />
+    </button>
+  );
+}
+
+function ArrowPad({
+  color,
+  onDirection,
+}: {
+  color: string;
+  onDirection: (dir: TouchDir, held: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const heldRef = useRef<Record<TouchDir, boolean>>({
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+  });
+  const onDirRef = useRef(onDirection);
+  onDirRef.current = onDirection;
+
+  const setDir = (dir: TouchDir, held: boolean) => {
+    heldRef.current[dir] = held;
+    onDirRef.current(dir, held);
+  };
+
+  useEffect(() => {
+    return () => {
+      (Object.keys(heldRef.current) as TouchDir[]).forEach((dir) => {
+        if (heldRef.current[dir]) onDirRef.current(dir, false);
+      });
+    };
+  }, []);
+
+  const labels: Record<TouchDir, string> = {
+    up: t("thrust"),
+    down: t("reverse"),
+    left: t("turnLeft"),
+    right: t("turnRight"),
+  };
+
+  return (
+    <div
+      className="grid h-[108px] w-[168px] shrink-0 grid-cols-3 grid-rows-2 gap-1 rounded-[28px] border p-1 backdrop-blur-md"
+      style={{
+        borderColor: `${color}66`,
+        background: "rgba(0,0,0,0.35)",
+        boxShadow: `inset 0 0 22px -8px ${color}`,
+      }}
+    >
+      {(Object.keys(DIR_CELL) as TouchDir[]).map((dir) => (
+        <DirButton
+          key={dir}
+          dir={dir}
+          color={color}
+          label={labels[dir]}
+          onHold={(held) => setDir(dir, held)}
+        />
+      ))}
+    </div>
+  );
+}
+
+type TouchControlProps = {
+  color: string;
+  label: string;
+  myScore?: number;
+  theirScore?: number;
+  theirColor?: string;
+  elapsed?: string;
+  showHud?: boolean;
+  showPause?: boolean;
+  onPause?: () => void;
+  onAim: (aim: number | null) => void;
+  onThrust: (held: boolean) => void;
+  onDirection: (dir: TouchDir, held: boolean) => void;
+  scheme?: TouchScheme;
+  headsUp: boolean;
+};
+
+function StickTouchControls({
   color,
   label,
   myScore,
@@ -61,26 +289,26 @@ export default function PlayerTouchControls({
   onAim,
   onThrust,
   headsUp,
-}: {
-  color: string;
-  label: string;
-  myScore?: number;
-  theirScore?: number;
-  theirColor?: string;
-  elapsed?: string;
-  showHud?: boolean;
-  showPause?: boolean;
-  onPause?: () => void;
-  onAim: (aim: number | null) => void;
-  onThrust: (held: boolean) => void;
-  headsUp: boolean;
-}) {
+}: TouchControlProps) {
   const { t } = useI18n();
   const stickRef = useRef<HTMLDivElement>(null);
   const stickPtr = useRef<number | null>(null);
   const thrustPtr = useRef<number | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0, active: false });
   const [thrusting, setThrusting] = useState(false);
+  const aimingRef = useRef(false);
+  const thrustingRef = useRef(false);
+  const onAimRef = useRef(onAim);
+  const onThrustRef = useRef(onThrust);
+  onAimRef.current = onAim;
+  onThrustRef.current = onThrust;
+
+  useEffect(() => {
+    return () => {
+      if (aimingRef.current) onAimRef.current(null);
+      if (thrustingRef.current) onThrustRef.current(false);
+    };
+  }, []);
 
   const applyStick = (clientX: number, clientY: number) => {
     const el = stickRef.current;
@@ -98,12 +326,16 @@ export default function PlayerTouchControls({
     }
     setKnob({ x: dx, y: dy, active: true });
     const magT = mag / max;
-    if (magT > DEADZONE) onAim(screenAim(dx, dy, headsUp));
+    if (magT > DEADZONE) {
+      aimingRef.current = true;
+      onAim(screenAim(dx, dy, headsUp));
+    }
   };
 
   const releaseStick = () => {
     stickPtr.current = null;
     setKnob({ x: 0, y: 0, active: false });
+    aimingRef.current = false;
     onAim(null);
   };
 
@@ -118,6 +350,7 @@ export default function PlayerTouchControls({
   return (
     <div
       className="flex w-full items-center justify-between gap-2 px-3 py-2"
+      data-scheme="stick"
       style={{ touchAction: "none", minHeight: TOUCH_STRIP_H }}
     >
       <div
@@ -165,42 +398,16 @@ export default function PlayerTouchControls({
       </div>
 
       {showHud && (
-        <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-[10px] font-bold tracking-widest"
-              style={{ color }}
-            >
-              {label}
-            </span>
-            {showPause && onPause && (
-              <button
-                type="button"
-                onClick={onPause}
-                className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-[10px] text-slate-200"
-              >
-                ❚❚
-              </button>
-            )}
-          </div>
-          <div className="flex items-baseline gap-2 font-mono">
-            <span className="text-2xl font-black leading-none" style={{ color }}>
-              {myScore ?? 0}
-            </span>
-            <span className="text-xs text-slate-500">–</span>
-            <span
-              className="text-lg font-bold leading-none"
-              style={{ color: theirColor }}
-            >
-              {theirScore ?? 0}
-            </span>
-          </div>
-          {elapsed != null && (
-            <span className="font-mono text-[10px] text-cyan-200/70">
-              {elapsed}
-            </span>
-          )}
-        </div>
+        <StripHud
+          color={color}
+          label={label}
+          myScore={myScore}
+          theirScore={theirScore}
+          theirColor={theirColor}
+          elapsed={elapsed}
+          showPause={showPause}
+          onPause={onPause}
+        />
       )}
 
       <button
@@ -223,24 +430,28 @@ export default function PlayerTouchControls({
           e.stopPropagation();
           thrustPtr.current = e.pointerId;
           capture(e.currentTarget, e.pointerId);
+          thrustingRef.current = true;
           setThrusting(true);
           onThrust(true);
         }}
         onPointerUp={(e) => {
           if (thrustPtr.current !== e.pointerId) return;
           thrustPtr.current = null;
+          thrustingRef.current = false;
           setThrusting(false);
           onThrust(false);
         }}
         onPointerCancel={(e) => {
           if (thrustPtr.current !== e.pointerId) return;
           thrustPtr.current = null;
+          thrustingRef.current = false;
           setThrusting(false);
           onThrust(false);
         }}
         onLostPointerCapture={(e) => {
           if (thrustPtr.current !== e.pointerId) return;
           thrustPtr.current = null;
+          thrustingRef.current = false;
           setThrusting(false);
           onThrust(false);
         }}
@@ -249,4 +460,46 @@ export default function PlayerTouchControls({
       </button>
     </div>
   );
+}
+
+function ArrowTouchControls({
+  color,
+  label,
+  myScore,
+  theirScore,
+  theirColor,
+  elapsed,
+  showHud = false,
+  showPause = false,
+  onPause,
+  onDirection,
+}: TouchControlProps) {
+  return (
+    <div
+      className="flex w-full items-center gap-2 px-3 py-2"
+      data-scheme="arrows"
+      style={{ touchAction: "none", minHeight: TOUCH_STRIP_H }}
+    >
+      {showHud ? (
+        <StripHud
+          color={color}
+          label={label}
+          myScore={myScore}
+          theirScore={theirScore}
+          theirColor={theirColor}
+          elapsed={elapsed}
+          showPause={showPause}
+          onPause={onPause}
+        />
+      ) : (
+        <div className="min-w-0 flex-1" />
+      )}
+      <ArrowPad color={color} onDirection={onDirection} />
+    </div>
+  );
+}
+
+export default function PlayerTouchControls(props: TouchControlProps) {
+  if (props.scheme === "arrows") return <ArrowTouchControls {...props} />;
+  return <StickTouchControls {...props} />;
 }

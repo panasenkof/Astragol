@@ -3,10 +3,17 @@ import FullscreenButton from "./FullscreenButton";
 import LanguageSelect from "./LanguageSelect";
 import { NeonButton, Panel, SectionTitle, Slider, Toggle, FitText } from "./ui";
 import { audio } from "@/game/audio";
-import { AI_DIFFICULTY_OPTIONS, type Settings } from "@/game/types";
+import {
+  AI_DIFFICULTY_OPTIONS,
+  TOUCH_SCHEME_OPTIONS,
+  type Settings,
+  type TouchScheme,
+} from "@/game/types";
 import {
   AI_BLURB_KEYS,
   AI_LABEL_KEYS,
+  TOUCH_BLURB_KEYS,
+  TOUCH_LABEL_KEYS,
   localeUsesWideTracking,
   useI18n,
   type LocaleSetting,
@@ -55,6 +62,55 @@ function ColorPicker({
           />
         </label>
       </div>
+    </div>
+  );
+}
+
+function SchemePicker({
+  label,
+  accent,
+  value,
+  onChange,
+}: {
+  label: string;
+  accent: string;
+  value: TouchScheme;
+  onChange: (scheme: TouchScheme) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="space-y-2">
+      <span className="text-sm font-semibold" style={{ color: accent }}>
+        {label}
+      </span>
+      <div className="grid grid-cols-2 gap-2">
+        {TOUCH_SCHEME_OPTIONS.map((opt) => {
+          const active = value === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => {
+                onChange(opt.id);
+                audio.click();
+              }}
+              className="@container min-w-0 rounded-2xl border px-2 py-3 text-center transition"
+              style={{
+                borderColor: active ? accent : "rgba(255,255,255,0.1)",
+                background: active ? `${accent}29` : "rgba(255,255,255,0.04)",
+                boxShadow: active ? `0 0 22px -6px ${accent}` : "none",
+              }}
+            >
+              <FitText className={active ? "text-white" : "text-slate-300"}>
+                {t(TOUCH_LABEL_KEYS[opt.id])}
+              </FitText>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-xs leading-relaxed text-slate-500">
+        {t(TOUCH_BLURB_KEYS[value])}
+      </p>
     </div>
   );
 }
@@ -240,6 +296,25 @@ export default function SettingsScreen({
             </div>
           </div>
           <p className="mt-4 text-xs text-slate-500">{t("physicsHint")}</p>
+        </Panel>
+
+        <Panel className="p-6">
+          <SectionTitle>{t("touchControls")}</SectionTitle>
+          <p className="mb-4 text-sm text-slate-400">{t("touchControlsHint")}</p>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <SchemePicker
+              label={t("touchP1")}
+              accent={settings.p1Color}
+              value={settings.p1Touch}
+              onChange={(scheme) => onChange({ p1Touch: scheme })}
+            />
+            <SchemePicker
+              label={t("touchP2")}
+              accent={settings.p2Color}
+              value={settings.p2Touch}
+              onChange={(scheme) => onChange({ p2Touch: scheme })}
+            />
+          </div>
         </Panel>
 
         <Panel className="p-6">

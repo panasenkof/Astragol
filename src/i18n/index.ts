@@ -16,6 +16,8 @@ export {
 export {
   AI_BLURB_KEYS,
   AI_LABEL_KEYS,
+  TOUCH_BLURB_KEYS,
+  TOUCH_LABEL_KEYS,
   interpolate,
   translations,
   type MessageKey,

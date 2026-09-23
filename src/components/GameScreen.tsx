@@ -7,7 +7,10 @@ import type { GameMode, Settings } from "@/game/types";
 import { NeonButton } from "./ui";
 import FullscreenButton from "./FullscreenButton";
 import { useFullscreen } from "@/hooks/useFullscreen";
-import PlayerTouchControls, { TOUCH_STRIP_H } from "./PlayerTouchControls";
+import PlayerTouchControls, {
+  TOUCH_STRIP_H,
+  type TouchDir,
+} from "./PlayerTouchControls";
 import { localeUsesWideTracking, useI18n, type Translate } from "@/i18n";
 
 interface Hud {
@@ -209,6 +212,15 @@ export default function GameScreen({
     else g.input.p2.up = held;
   };
 
+  const setDirection = (who: 0 | 1, dir: TouchDir, held: boolean) => {
+    const g = gameRef.current;
+    if (!g) return;
+    const pad = who === 0 ? g.input.p1 : g.input.p2;
+    // Arrow buttons steer like the keyboard, so a stick heading must not win.
+    pad.aimStick = null;
+    pad[dir] = held;
+  };
+
   useEffect(() => {
     const sync = () => {
       setIsTouch(isCoarsePointer());
@@ -394,6 +406,10 @@ export default function GameScreen({
 
   useEffect(() => {
     gameRef.current?.applySettings(settings);
+    const g = gameRef.current;
+    if (!g) return;
+    if (settings.p1Touch === "arrows") g.input.p1.aimStick = null;
+    if (settings.p2Touch === "arrows") g.input.p2.aimStick = null;
   }, [settings]);
 
   useEffect(() => {
@@ -565,7 +581,12 @@ export default function GameScreen({
                   className="rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 text-center text-[10px] tracking-wide text-slate-300"
                   dir={overlayDir}
                 >
-                  {t("headsUpHint")}
+                  {t(
+                    (who === 0 ? settings.p1Touch : settings.p2Touch) ===
+                      "arrows"
+                      ? "headsUpHintArrows"
+                      : "headsUpHint"
+                  )}
                 </div>
               )}
             </div>
@@ -645,6 +666,8 @@ export default function GameScreen({
                 onPause={togglePause}
                 onAim={(a) => setAim(1, a)}
                 onThrust={(v) => setThrust(1, v)}
+                onDirection={(dir, held) => setDirection(1, dir, held)}
+                scheme={settings.p2Touch}
                 headsUp
               />
             </div>
@@ -662,6 +685,8 @@ export default function GameScreen({
               onPause={togglePause}
               onAim={(a) => setAim(0, a)}
               onThrust={(v) => setThrust(0, v)}
+              onDirection={(dir, held) => setDirection(0, dir, held)}
+              scheme={settings.p1Touch}
               headsUp
             />
           </div>
@@ -675,6 +700,8 @@ export default function GameScreen({
             label={youLabel}
             onAim={(a) => setAim(0, a)}
             onThrust={(v) => setThrust(0, v)}
+            onDirection={(dir, held) => setDirection(0, dir, held)}
+            scheme={settings.p1Touch}
             headsUp={fieldRotated}
           />
         </div>

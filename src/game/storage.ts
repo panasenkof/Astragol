@@ -3,6 +3,7 @@ import { isLocaleSetting } from "@/i18n";
 import {
   DEFAULT_SETTINGS,
   isAiDifficulty,
+  isTouchScheme,
   type ScoreEntry,
   type Settings,
 } from "./types";
@@ -21,6 +22,12 @@ export function loadSettings(): Settings {
     }
     if (!isLocaleSetting(merged.locale)) {
       merged.locale = DEFAULT_SETTINGS.locale;
+    }
+    if (!isTouchScheme(merged.p1Touch)) {
+      merged.p1Touch = DEFAULT_SETTINGS.p1Touch;
+    }
+    if (!isTouchScheme(merged.p2Touch)) {
+      merged.p2Touch = DEFAULT_SETTINGS.p2Touch;
     }
     return merged;
   } catch {
